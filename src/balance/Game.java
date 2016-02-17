@@ -1,6 +1,5 @@
 package balance;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -15,6 +14,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 public class Game extends JFrame {
@@ -37,13 +37,24 @@ public class Game extends JFrame {
 	private JLabel message = new JLabel();
 	
 	enum Selected {
-		CITY,
-		TREE,
-		FIRE
+		CITY("City"),
+		TREE("Tree"),
+		FIRE("Fire");
+		
+		private String name;
+		public String toString() {
+			return name;
+		}
+		
+		private Selected(String name) {
+			this.name = name;
+		}		
+		
 	}
 	
 	private Selected move = Selected.CITY;
 	private boolean fireNorthSouth = true;
+	private boolean player1Turn = true;
 
 	public static void main(String[] args) {		
 		new Game();		
@@ -120,6 +131,7 @@ public class Game extends JFrame {
 		
 		JPanel messagePanel = new JPanel(new BorderLayout());
 		messagePanel.setBorder(BorderFactory.createTitledBorder("Message"));
+		message.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		messagePanel.add(message, BorderLayout.NORTH);		
 		messagePanel.setMinimumSize(new Dimension(200, 200));
 		messagePanel.setMaximumSize(new Dimension(200, 200));
@@ -181,17 +193,214 @@ public class Game extends JFrame {
 	}	
 	
 	public void clickButton( int row, int column ) {
-		if( move == Selected.CITY )
-			board[row][column] = new City();
-		else if( move == Selected.TREE )
-			board[row][column] = new Tree();
-		else if( fireNorthSouth )
-			board[row][column] = new Fire(Fire.NORTH | Fire.SOUTH);
-		else
-			board[row][column] = new Fire(Fire.EAST | Fire.WEST);
+		if( move == Selected.CITY ) {
+			
+			if( canBuild(row, column) )
+				board[row][column] = new City();
+			else {
+				addMessage("Cannot build city at (" + row + "," + column + ")" );
+				return;
+			}
+		}
+		else if( move == Selected.TREE ) {
+			if( canPlant(row, column) )
+				board[row][column] = new Tree();
+			else {
+				addMessage("Cannot plant tree at (" + row + "," + column + ")" );
+				return;
+			}
+		}
+		else if( move == Selected.FIRE  ) {
+			if( canBurn(row, column) ) {
+				if( fireNorthSouth )
+					board[row][column] = new Fire(Fire.NORTH | Fire.SOUTH);
+				else
+					board[row][column] = new Fire(Fire.EAST | Fire.WEST);
+			}
+			else {
+				addMessage("Cannot light fire at (" + row + "," + column + ")" );
+				return;
+			}
+		}
 		
-		board[row][column].update(buttons[row][column]);
+		updateFire();
+		updateTree();
+		updateCity();
+		
+		for( int i = 0; i < ROWS; ++i )
+			for( int j = 0; j < COLUMNS; ++j )
+				board[i][j].update(buttons[i][j]);
+		
+		
+		
+		addMessage("Player " + (player1Turn ? 1 : 2) + " played " + move + " at (" + row + "," + column + ")" );
+		
+		player1Turn = !player1Turn;
+		
+		if( player1Turn )
+			playerTurn.setText("Player 1 Turn");
+		else
+			playerTurn.setText("Player 2 Turn");
+		
+		updateCounts();
 	}
+	
+	private void updateCity() {
+		for( int i = 0; i < ROWS; ++i )
+			for( int j = 0; j < COLUMNS; ++j )
+				swap[i][j] = board[i][j];
+		
+		for( int i = 0; i < ROWS; ++i )
+			for( int j = 0; j < COLUMNS; ++j ) {
+				if( canBuild(i,j) ) {
+					int neighboringCities = 0;
+					for( int row = i - 1; row <= i + 1; ++row )
+						for( int column = j - 1; column <= j + 1; ++column )
+							if( (row != i || column != j) && isLegal(row, column) && board[row][column] instanceof City ) {
+								neighboringCities++;								
+							}
+					
+					if( neighboringCities >= 4 ) {
+						swap[i][j] = new City();
+					}
+				}				
+			}
+		
+		Square[][] temp = board;
+		board = swap;
+		swap = temp;		
+	}
+
+	private void updateTree() {
+		for( int i = 0; i < ROWS; ++i )
+			for( int j = 0; j < COLUMNS; ++j )
+				swap[i][j] = board[i][j];
+		
+		for( int i = 0; i < ROWS; ++i )
+			for( int j = 0; j < COLUMNS; ++j ) {
+				if( !(board[i][j] instanceof Fire) ) {
+					if( (isTree(i - 1, j) && isTree(i + 1, j)) ||
+						(isTree(i, j - 1) && isTree(i, j + 1)) ||
+						(isTree(i - 1, j - 1) && isTree(i + 1, j + 1)) ||
+						(isTree(i + 1, j - 1) && isTree(i - 1, j + 1)))
+						swap[i][j] = new Tree();
+				}				
+			}
+		
+		Square[][] temp = board;
+		board = swap;
+		swap = temp;
+	}
+
+	private void updateFire() {
+		for( int i = 0; i < ROWS; ++i )
+			for( int j = 0; j < COLUMNS; ++j )
+				swap[i][j] = board[i][j];
+		
+		for( int i = 0; i < ROWS; ++i )
+			for( int j = 0; j < COLUMNS; ++j ) {
+				if( board[i][j] instanceof Fire ) {
+					Fire fire = (Fire) board[i][j];
+					if( fire.isHeaded( Fire.NORTH ) && isLegal( i - 1, j ) && canBurn(i - 1, j) ) {
+						addFire( i - 1, j, Fire.NORTH );						
+						if( board[i - 1][j] instanceof Tree )
+							addFire( i - 1, j, Fire.EAST | Fire.WEST);
+					}
+					if( fire.isHeaded( Fire.SOUTH ) && isLegal( i + 1, j ) && canBurn(i + 1, j) ) {
+						addFire( i + 1, j, Fire.SOUTH );						
+						if( board[i + 1][j] instanceof Tree )
+							addFire( i + 1, j, Fire.EAST | Fire.WEST);
+					}
+					if( fire.isHeaded( Fire.EAST ) && isLegal( i, j + 1 ) && canBurn(i, j + 1) ) {
+						addFire( i, j + 1, Fire.EAST );						
+						if( board[i][j + 1] instanceof Tree )
+							addFire( i, j + 1, Fire.NORTH | Fire.SOUTH );
+					}					
+					if( fire.isHeaded( Fire.WEST ) && isLegal( i, j - 1 ) && canBurn(i, j - 1) ) {
+						addFire( i, j - 1, Fire.WEST );						
+						if( board[i][j - 1] instanceof Tree )
+							addFire( i, j - 1, Fire.NORTH | Fire.SOUTH );
+					}
+					
+					swap[i][j] = new Desert();
+				}
+				
+			}
+		
+		Square[][] temp = board;
+		board = swap;
+		swap = temp;
+	}
+	
+	private void addFire( int row, int column, int directions ) {
+		if( swap[row][column] instanceof Fire ) {
+			Fire fire = (Fire)swap[row][column];
+			fire.addDirection(directions);
+		}
+		else
+			swap[row][column] = new Fire(directions);
+	}
+	
+	private static boolean isLegal(int row, int column) {
+		return row >= 0 && column >= 0 && row < ROWS && column < COLUMNS;
+	}
+	
+	private boolean isTree( int row, int column ) {
+		return isLegal(row, column) && board[row][column] instanceof Tree;
+	}
+	
+	private boolean canBurn( int row, int column ) {
+		Square square = board[row][column];
+		return square instanceof Grass || square instanceof Tree;
+	}
+	
+	private boolean canBuild( int row, int column ) {
+		Square square = board[row][column];
+		return square instanceof Grass || square instanceof Desert;
+	}
+	
+	private boolean canPlant( int row, int column ) {
+		Square square = board[row][column];
+		return square instanceof Grass || square instanceof Desert || square instanceof City;
+	}
+
+	private void updateCounts() {
+		int grassCount = 0;
+		int desertCount = 0;
+		int treeCount = 0;
+		int cityCount = 0;		
+		
+		for( int i = 0; i < ROWS; ++i )
+			for( int j = 0; j < COLUMNS; ++j ) {
+				Square square = board[i][j];
+				if( square instanceof Grass )
+					grassCount++;
+				else if( square instanceof City )
+					cityCount++;
+				else if( square instanceof Tree )
+					treeCount++;
+				else //covers desert and fire
+					desertCount++;				
+			}
+		
+		double total = ROWS*COLUMNS;
+		double grassPercent = 100 * grassCount / total;
+		double cityPercent = 100 * cityCount / total;
+		double treePercent = 100 * treeCount / total;
+		double desertPercent = 100 * desertCount / total;
+		
+		grass.setText(String.format("Grass: %.0f%%", grassPercent));
+		desert.setText(String.format("Desert: %.0f%%", desertPercent));
+		tree.setText(String.format("Tree: %.0f%%", treePercent));
+		city.setText(String.format("City: %.0f%%", cityPercent));
+	}
+
+	private void addMessage(String text) {
+		message.setText(text);
+	}
+	
+	
+	
 	
 	
 	private static Square makeRandomSquare( Random random ) {
