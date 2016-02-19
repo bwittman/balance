@@ -14,7 +14,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 public class Game extends JFrame {
@@ -53,7 +52,7 @@ public class Game extends JFrame {
 	}
 	
 	private Selected move = Selected.CITY;
-	private boolean fireNorthSouth = true;
+	private int fireDirection = Fire.NORTH;
 	private boolean player1Turn = true;
 
 	public static void main(String[] args) {		
@@ -114,7 +113,7 @@ public class Game extends JFrame {
 				selectTree();				
 			}}));
 		
-		display.add(createSelector( fireSelected, fireButton, new Fire( Fire.NORTH | Fire.SOUTH), new ActionListener() {
+		display.add(createSelector( fireSelected, fireButton, new Fire( Fire.NORTH ), new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				selectFire();				
@@ -177,19 +176,22 @@ public class Game extends JFrame {
 	}
 	
 	public void selectFire() {
-		if( move == Selected.FIRE)
-			fireNorthSouth = !fireNorthSouth;
+		if( move == Selected.FIRE) {
+			switch( fireDirection ) {
+			case Fire.NORTH: fireDirection = Fire.EAST; break;
+			case Fire.SOUTH: fireDirection = Fire.WEST; break;
+			case Fire.EAST: fireDirection = Fire.SOUTH; break;
+			case Fire.WEST: fireDirection = Fire.NORTH; break;
+			}
+		}
 		else {
 			move = Selected.FIRE;
 			citySelected.setText("");
 			treeSelected.setText("");
 			fireSelected.setText("Fire Selected");
-		}
+		}		
 		
-		if( fireNorthSouth )
-			new Fire(Fire.NORTH | Fire.SOUTH).update(fireButton);
-		else
-			new Fire(Fire.EAST | Fire.WEST).update(fireButton);		
+		new Fire(fireDirection).update(fireButton);
 	}	
 	
 	public void clickButton( int row, int column ) {
@@ -211,12 +213,8 @@ public class Game extends JFrame {
 			}
 		}
 		else if( move == Selected.FIRE  ) {
-			if( canBurn(row, column) ) {
-				if( fireNorthSouth )
-					board[row][column] = new Fire(Fire.NORTH | Fire.SOUTH);
-				else
-					board[row][column] = new Fire(Fire.EAST | Fire.WEST);
-			}
+			if( canBurn(row, column) )				
+				board[row][column] = new Fire(fireDirection);			
 			else {
 				addMessage("Cannot light fire at (" + row + "," + column + ")" );
 				return;
@@ -304,22 +302,22 @@ public class Game extends JFrame {
 					if( fire.isHeaded( Fire.NORTH ) && isLegal( i - 1, j ) && canBurn(i - 1, j) ) {
 						addFire( i - 1, j, Fire.NORTH );						
 						if( board[i - 1][j] instanceof Tree )
-							addFire( i - 1, j, Fire.EAST | Fire.WEST);
+							addFire( i - 1, j, Fire.EAST);
 					}
 					if( fire.isHeaded( Fire.SOUTH ) && isLegal( i + 1, j ) && canBurn(i + 1, j) ) {
 						addFire( i + 1, j, Fire.SOUTH );						
 						if( board[i + 1][j] instanceof Tree )
-							addFire( i + 1, j, Fire.EAST | Fire.WEST);
+							addFire( i + 1, j, Fire.WEST);
 					}
 					if( fire.isHeaded( Fire.EAST ) && isLegal( i, j + 1 ) && canBurn(i, j + 1) ) {
 						addFire( i, j + 1, Fire.EAST );						
 						if( board[i][j + 1] instanceof Tree )
-							addFire( i, j + 1, Fire.NORTH | Fire.SOUTH );
+							addFire( i, j + 1, Fire.SOUTH );
 					}					
 					if( fire.isHeaded( Fire.WEST ) && isLegal( i, j - 1 ) && canBurn(i, j - 1) ) {
 						addFire( i, j - 1, Fire.WEST );						
 						if( board[i][j - 1] instanceof Tree )
-							addFire( i, j - 1, Fire.NORTH | Fire.SOUTH );
+							addFire( i, j - 1, Fire.NORTH );
 					}
 					
 					swap[i][j] = new Desert();
