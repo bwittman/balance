@@ -18,8 +18,8 @@ import javax.swing.JPanel;
 
 public class Game extends JFrame {
 	private static final long serialVersionUID = -8705064841297440045L;
-	public static final int ROWS = 15;
-	public static final int COLUMNS = 15;
+	public static final int ROWS = 12;
+	public static final int COLUMNS = 12;
 	
 	private Square[][] board = new Square[ROWS][COLUMNS]; 
 	private Square[][] swap = new Square[ROWS][COLUMNS];
@@ -276,12 +276,19 @@ public class Game extends JFrame {
 		
 		for( int i = 0; i < ROWS; ++i )
 			for( int j = 0; j < COLUMNS; ++j ) {
-				if( !(board[i][j] instanceof Fire) ) {
+				if( board[i][j] instanceof Grass || board[i][j] instanceof Desert ) {
+					//fill empty spot between trees
 					if( (isTree(i - 1, j) && isTree(i + 1, j)) ||
 						(isTree(i, j - 1) && isTree(i, j + 1)) ||
 						(isTree(i - 1, j - 1) && isTree(i + 1, j + 1)) ||
 						(isTree(i + 1, j - 1) && isTree(i - 1, j + 1)))
 						swap[i][j] = new Tree();
+					//grow counterclockwise around cities 
+					else if( (isTree(i - 1, j ) && ( isCity( i, j + 1) || isCity( i - 1, j + 1) ) ) ||  
+					(isTree(i, j - 1) && ( isCity( i - 1, j) || isCity( i - 1, j - 1) ) ) ||
+					(isTree(i + 1, j ) && ( isCity( i, j - 1) || isCity( i + 1, j - 1) ) ) ||
+					(isTree(i, j + 1) && ( isCity( i + 1, j) || isCity( i + 1, j + 1) ) ))
+						swap[i][j] = new Tree();					
 				}				
 			}
 		
@@ -302,7 +309,7 @@ public class Game extends JFrame {
 					if( fire.isHeaded( Fire.NORTH ) && isLegal( i - 1, j ) && canBurn(i - 1, j) ) {
 						addFire( i - 1, j, Fire.NORTH );						
 						if( board[i - 1][j] instanceof Tree )
-							addFire( i - 1, j, Fire.EAST);
+							addFire( i - 1, j, Fire.EAST );
 					}
 					if( fire.isHeaded( Fire.SOUTH ) && isLegal( i + 1, j ) && canBurn(i + 1, j) ) {
 						addFire( i + 1, j, Fire.SOUTH );						
@@ -317,7 +324,7 @@ public class Game extends JFrame {
 					if( fire.isHeaded( Fire.WEST ) && isLegal( i, j - 1 ) && canBurn(i, j - 1) ) {
 						addFire( i, j - 1, Fire.WEST );						
 						if( board[i][j - 1] instanceof Tree )
-							addFire( i, j - 1, Fire.NORTH );
+							addFire( i, j - 1, Fire.NORTH);
 					}
 					
 					swap[i][j] = new Desert();
@@ -346,6 +353,11 @@ public class Game extends JFrame {
 	private boolean isTree( int row, int column ) {
 		return isLegal(row, column) && board[row][column] instanceof Tree;
 	}
+	
+	private boolean isCity( int row, int column ) {
+		return isLegal(row, column) && board[row][column] instanceof City;
+	}
+	
 	
 	private boolean canBurn( int row, int column ) {
 		Square square = board[row][column];
