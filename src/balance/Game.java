@@ -245,8 +245,10 @@ public class Game extends JFrame {
 			case CITY: cityAlignment.setText(player); break;
 			case TREE: treeAlignment.setText(player); break;
 			case FIRE: desertAlignment.setText(player); break;
-			}				
-				
+			}
+			
+			updateBoard();
+			
 			addMessage(player + " aligned with " + alignment);
 			
 			player1Turn = !player1Turn;
@@ -258,6 +260,16 @@ public class Game extends JFrame {
 		}
 	}
 	
+	private void updateBoard() {
+		updateFire();
+		updateTree();
+		updateCity();
+		
+		for( int i = 0; i < ROWS; ++i )
+			for( int j = 0; j < COLUMNS; ++j )
+				board[i][j].update(buttons[i][j]);		
+	}
+
 	public void selectCity() {
 		move = Selected.CITY;
 		citySelected.setText("City Selected");
@@ -318,15 +330,7 @@ public class Game extends JFrame {
 			}
 		}
 		
-		updateFire();
-		updateTree();
-		updateCity();
-		
-		for( int i = 0; i < ROWS; ++i )
-			for( int j = 0; j < COLUMNS; ++j )
-				board[i][j].update(buttons[i][j]);
-		
-		
+		updateBoard();
 		
 		addMessage("Player " + (player1Turn ? 1 : 2) + " played " + move + " at (" + row + "," + column + ")" );
 		
@@ -355,7 +359,9 @@ public class Game extends JFrame {
 								neighboringCities++;								
 							}
 					
-					if( neighboringCities >= 4 ) {
+					int limit = board[i][j] instanceof Desert ? 3 : 4; 
+					
+					if( neighboringCities >= limit ) {
 						swap[i][j] = new City();
 					}
 				}				
@@ -504,34 +510,5 @@ public class Game extends JFrame {
 
 	private void addMessage(String text) {
 		message.setText(text);
-	}
-	
-	
-	
-	
-	
-	private static Square makeRandomSquare( Random random ) {
-		switch( random.nextInt(5) ) {
-		case 0:	 return new City();			
-		case 1:  return new Desert();
-		case 2: {
-			Fire fire = new Fire();			
-			do
-			{
-				if( random.nextInt(3) == 0 )
-					fire.addDirection(Fire.NORTH);
-				if( random.nextInt(3) == 0 )
-					fire.addDirection(Fire.SOUTH);
-				if( random.nextInt(3) == 0 )
-					fire.addDirection(Fire.EAST);
-				if( random.nextInt(3) == 0 )
-					fire.addDirection(Fire.WEST);				
-				
-			} while( fire.getDirections() == 0 );
-			return fire;
-		}
-		case 3:  return new Grass();			
-		default: return new Tree();
-		}		
 	}
 }
