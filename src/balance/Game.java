@@ -28,12 +28,18 @@ public class Game extends JFrame {
 	private JLabel citySelected = new JLabel("City Selected");
 	private JLabel treeSelected = new JLabel("");
 	private JLabel fireSelected = new JLabel("");
+	private JLabel cityAlignment = new JLabel("Player 1");
+	private JLabel treeAlignment = new JLabel("Player 2");
+	private JLabel desertAlignment = new JLabel("");
 	private JButton fireButton = new JButton();
 	private JLabel grass = new JLabel("Grass: 100%");
 	private JLabel desert = new JLabel("Desert: 0%");
 	private JLabel tree = new JLabel("Tree: 0%");
 	private JLabel city = new JLabel("City: 0%");
 	private JLabel message = new JLabel();
+	
+	private Selected player1Alignment = Selected.CITY;
+	private Selected player2Alignment = Selected.TREE;
 	
 	enum Selected {
 		CITY("City"),
@@ -87,7 +93,7 @@ public class Game extends JFrame {
 		add(tiles, BorderLayout.CENTER);
 		
 		JPanel display = new JPanel();		
-		display.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		display.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		display.setLayout(new BoxLayout(display, BoxLayout.Y_AXIS));
 			
 		
@@ -99,44 +105,92 @@ public class Game extends JFrame {
 		panel.setPreferredSize(new Dimension(200, 25));
 		display.add(panel);
 		
-		display.add(Box.createVerticalStrut(10));
+		display.add(Box.createVerticalStrut(5));
 		
-		display.add(createSelector( citySelected, new JButton(), new City(), new ActionListener() {
+		
+		panel = new JPanel();
+		panel.setMinimumSize(new Dimension(200, 210));
+		panel.setMaximumSize(new Dimension(200, 210));
+		panel.setPreferredSize(new Dimension(200, 210));
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Next Move"), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+			
+		
+		panel.add(createSelector( citySelected, new JButton(), new City(), new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				selectCity();				
 			}}));
 		
-		display.add(createSelector( treeSelected, new JButton(), new Tree(), new ActionListener() {
+		panel.add(createSelector( treeSelected, new JButton(), new Tree(), new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				selectTree();				
 			}}));
 		
-		display.add(createSelector( fireSelected, fireButton, new Fire( Fire.NORTH ), new ActionListener() {
+		panel.add(createSelector( fireSelected, fireButton, new Fire( Fire.NORTH ), new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				selectFire();				
 			}}));
 		
-		display.add(Box.createVerticalStrut(10));
+		display.add(panel);
 		
-		display.add(grass);
-		display.add(desert);
-		display.add(tree);
-		display.add(city);
+		display.add(Box.createVerticalStrut(5));
+		
+		panel = new JPanel();
+		panel.setMinimumSize(new Dimension(200, 100));
+		panel.setMaximumSize(new Dimension(200, 100));
+		panel.setPreferredSize(new Dimension(200, 100));
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Land"), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+		
+		panel.add(grass);
+		panel.add(desert);
+		panel.add(tree);
+		panel.add(city);
+		display.add(panel);
+		
+		display.add(Box.createVerticalStrut(5));
+		
+		panel = new JPanel();
+		panel.setMinimumSize(new Dimension(200, 210));
+		panel.setMaximumSize(new Dimension(200, 210));
+		panel.setPreferredSize(new Dimension(200, 210));
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Alignment"), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+		
+		panel.add(createSelector( cityAlignment, new JButton(), new City(), new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				updateAlignment( Selected.CITY );				
+			}}));
+		
+		panel.add(createSelector( treeAlignment, new JButton(), new Tree(), new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				updateAlignment( Selected.TREE );
+			}}));
+		
+		panel.add(createSelector( desertAlignment, new JButton(), new Desert(), new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				updateAlignment( Selected.FIRE );
+			}}));
+		
+		display.add(panel);
 		
 		display.add(Box.createVerticalGlue());
 		
-		JPanel messagePanel = new JPanel(new BorderLayout());
-		messagePanel.setBorder(BorderFactory.createTitledBorder("Message"));
+		panel = new JPanel(new BorderLayout());
+		panel.setBorder(BorderFactory.createTitledBorder("Message"));
 		message.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		messagePanel.add(message, BorderLayout.NORTH);		
-		messagePanel.setMinimumSize(new Dimension(200, 200));
-		messagePanel.setMaximumSize(new Dimension(200, 200));
-		messagePanel.setPreferredSize(new Dimension(200, 200));
-		messagePanel.setAlignmentX(LEFT_ALIGNMENT);
-		display.add(messagePanel);
+		panel.add(message, BorderLayout.NORTH);		
+		panel.setMinimumSize(new Dimension(200, 100));
+		panel.setMaximumSize(new Dimension(200, 100));
+		panel.setPreferredSize(new Dimension(200, 100));
+		panel.setAlignmentX(LEFT_ALIGNMENT);
+		display.add(panel);
 		
 		add(display, BorderLayout.EAST);
 		
@@ -159,6 +213,49 @@ public class Game extends JFrame {
 		panel.setPreferredSize(new Dimension(150 + button.getIcon().getIconWidth(), button.getIcon().getIconHeight() + 10));
 		panel.setAlignmentX(LEFT_ALIGNMENT);
 		return panel;
+	}
+	
+	public void updateAlignment( Selected alignment ) {
+		if( player1Alignment != alignment && player2Alignment != alignment ) {
+			
+			String player = "Player " + (player1Turn ? 1 : 2);
+			
+			if( player1Turn ) {
+				if( player1Alignment == Selected.CITY && alignment != Selected.CITY )
+					cityAlignment.setText("");
+				else if( player1Alignment == Selected.TREE && alignment != Selected.TREE )
+					treeAlignment.setText("");
+				else if( player1Alignment == Selected.FIRE && alignment != Selected.FIRE )
+					desertAlignment.setText("");	
+				
+				player1Alignment = alignment;
+			}
+			else {
+				if( player2Alignment == Selected.CITY && alignment != Selected.CITY )
+					cityAlignment.setText("");
+				else if( player2Alignment == Selected.TREE && alignment != Selected.TREE )
+					treeAlignment.setText("");
+				else if( player2Alignment == Selected.FIRE && alignment != Selected.FIRE )
+					desertAlignment.setText("");
+				
+				player2Alignment = alignment;
+			}
+			
+			switch( alignment ) {
+			case CITY: cityAlignment.setText(player); break;
+			case TREE: treeAlignment.setText(player); break;
+			case FIRE: desertAlignment.setText(player); break;
+			}				
+				
+			addMessage(player + " aligned with " + alignment);
+			
+			player1Turn = !player1Turn;
+			
+			if( player1Turn )
+				playerTurn.setText("Player 1 Turn");
+			else
+				playerTurn.setText("Player 2 Turn");
+		}
 	}
 	
 	public void selectCity() {
