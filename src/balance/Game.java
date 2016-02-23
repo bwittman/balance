@@ -6,7 +6,6 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Random;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -14,6 +13,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 public class Game extends JFrame {
@@ -28,18 +28,18 @@ public class Game extends JFrame {
 	private JLabel citySelected = new JLabel("City Selected");
 	private JLabel treeSelected = new JLabel("");
 	private JLabel fireSelected = new JLabel("");
-	private JLabel cityAlignment = new JLabel("Player 1");
-	private JLabel treeAlignment = new JLabel("Player 2");
+	private JLabel cityAlignment = new JLabel("");
+	private JLabel treeAlignment = new JLabel("");
 	private JLabel desertAlignment = new JLabel("");
-	private JButton fireButton = new JButton();
-	private JLabel grass = new JLabel("Grass: 100%");
-	private JLabel desert = new JLabel("Desert: 0%");
-	private JLabel tree = new JLabel("Tree: 0%");
-	private JLabel city = new JLabel("City: 0%");
+	private JButton fireButton = new JButton();	
+	private JLabel grass = new JLabel("100%");
+	private JLabel desert = new JLabel("0%");
+	private JLabel tree = new JLabel("0%");
+	private JLabel city = new JLabel("0%");
 	private JLabel message = new JLabel();
 	
-	private Selected player1Alignment = Selected.CITY;
-	private Selected player2Alignment = Selected.TREE;
+	private Selected player1Alignment;
+	private Selected player2Alignment;
 	
 	enum Selected {
 		CITY("City"),
@@ -60,13 +60,16 @@ public class Game extends JFrame {
 	private Selected move = Selected.CITY;
 	private int fireDirection = Fire.NORTH;
 	private boolean player1Turn = true;
+	private boolean running = true;
 
 	public static void main(String[] args) {		
 		new Game();		
 	}
 	
 	public Game() {
-		super("Balance");		
+		super("Balance");
+		
+		initializeAlignments();
 		
 		JPanel tiles = new JPanel();	
 		tiles.setLayout(new GridLayout(ROWS, COLUMNS));
@@ -84,9 +87,8 @@ public class Game extends JFrame {
 					@Override
 					public void actionPerformed(ActionEvent arg0) {
 						clickButton( row, column );						
-					}});				
+					}});
 				
-				//button.setBorder(null);
 				tiles.add(buttons[i][j]);
 			}
 		
@@ -142,13 +144,18 @@ public class Game extends JFrame {
 		panel.setMinimumSize(new Dimension(200, 100));
 		panel.setMaximumSize(new Dimension(200, 100));
 		panel.setPreferredSize(new Dimension(200, 100));
-		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		panel.setLayout(new GridLayout(4,2));
 		panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Land"), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 		
+		panel.add(new JLabel("Grass:"));
 		panel.add(grass);
+		panel.add(new JLabel("Desert:"));
 		panel.add(desert);
+		panel.add(new JLabel("Tree:"));
 		panel.add(tree);
+		panel.add(new JLabel("City:"));
 		panel.add(city);
+		panel.setAlignmentX(LEFT_ALIGNMENT);
 		display.add(panel);
 		
 		display.add(Box.createVerticalStrut(5));
@@ -200,6 +207,53 @@ public class Game extends JFrame {
 		setVisible(true);
 	}
 	
+	private void initializeAlignments() {
+		String[] alignments = {"City", "Tree", "Fire"}; 
+		
+		String alignment1;		
+		do {
+			alignment1 = (String)JOptionPane.showInputDialog(this, "Player 1, what is your starting alignment?", "Player 1 Alignment", JOptionPane.PLAIN_MESSAGE, null, alignments, alignments[0]);
+		} while( alignment1 == null );
+		
+		switch( alignment1 ) {
+		case "City":
+			alignments = new String[]{"Tree", "Fire"};
+			cityAlignment.setText("Player 1");
+			player1Alignment = Selected.CITY;
+			break;
+		case "Tree":
+			alignments = new String[]{"City", "Fire"};
+			treeAlignment.setText("Player 1");
+			player1Alignment = Selected.TREE;
+			break;
+		case "Fire":
+			alignments = new String[]{"City", "Tree"};
+			desertAlignment.setText("Player 1");
+			player1Alignment = Selected.FIRE;
+			break;
+		}
+		
+		String alignment2;		
+		do {
+			alignment2 = (String)JOptionPane.showInputDialog(this, "Player 2, what is your starting alignment?", "Player 2 Alignment", JOptionPane.PLAIN_MESSAGE, null, alignments, alignments[0]);
+		} while( alignment2 == null );		
+		
+		switch( alignment2 ) {
+		case "City":
+			cityAlignment.setText("Player 2");
+			player2Alignment = Selected.CITY;
+			break;
+		case "Tree":
+			treeAlignment.setText("Player 2");
+			player2Alignment = Selected.TREE;
+			break;
+		case "Fire":
+			desertAlignment.setText("Player 2");
+			player2Alignment = Selected.FIRE;
+			break;
+		}		
+	}
+
 	private static JPanel createSelector( JLabel label, JButton button, Square square, ActionListener listener ){
 		JPanel panel = new JPanel();		
 		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));		
@@ -216,9 +270,12 @@ public class Game extends JFrame {
 	}
 	
 	public void updateAlignment( Selected alignment ) {
-		if( player1Alignment != alignment && player2Alignment != alignment ) {
+		if( running && player1Alignment != alignment && player2Alignment != alignment ) {
 			
 			String player = "Player " + (player1Turn ? 1 : 2);
+			
+			if( JOptionPane.showConfirmDialog(this, player + ", are you sure you want to change alignment to " + alignment + "?", "Change Alignment?", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION )
+				return;
 			
 			if( player1Turn ) {
 				if( player1Alignment == Selected.CITY && alignment != Selected.CITY )
@@ -271,6 +328,9 @@ public class Game extends JFrame {
 	}
 
 	public void selectCity() {
+		if( !running )
+			return;	
+		
 		move = Selected.CITY;
 		citySelected.setText("City Selected");
 		treeSelected.setText("");
@@ -278,6 +338,9 @@ public class Game extends JFrame {
 	}
 	
 	public void selectTree() {
+		if( !running )
+			return;	
+
 		move = Selected.TREE;
 		citySelected.setText("");
 		treeSelected.setText("Tree Selected");
@@ -285,6 +348,9 @@ public class Game extends JFrame {
 	}
 	
 	public void selectFire() {
+		if( !running )
+			return;
+		
 		if( move == Selected.FIRE) {
 			switch( fireDirection ) {
 			case Fire.NORTH: fireDirection = Fire.EAST; break;
@@ -304,26 +370,37 @@ public class Game extends JFrame {
 	}	
 	
 	public void clickButton( int row, int column ) {
+		if( !running )
+			return;
+		
+		String verb = "";
+		
 		if( move == Selected.CITY ) {
 			
-			if( canBuild(row, column) )
+			if( canBuild(row, column) ) {
 				board[row][column] = new City();
+				verb = "built";
+			}				
 			else {
 				addMessage("Cannot build city at (" + row + "," + column + ")" );
 				return;
 			}
 		}
 		else if( move == Selected.TREE ) {
-			if( canPlant(row, column) )
+			if( canPlant(row, column) ) {
 				board[row][column] = new Tree();
+				verb = "planted";
+			}
 			else {
 				addMessage("Cannot plant tree at (" + row + "," + column + ")" );
 				return;
 			}
 		}
 		else if( move == Selected.FIRE  ) {
-			if( canBurn(row, column) )				
-				board[row][column] = new Fire(fireDirection);			
+			if( canBurn(row, column) ) {				
+				board[row][column] = new Fire(fireDirection);
+				verb = "lit";
+			}
 			else {
 				addMessage("Cannot light fire at (" + row + "," + column + ")" );
 				return;
@@ -332,7 +409,7 @@ public class Game extends JFrame {
 		
 		updateBoard();
 		
-		addMessage("Player " + (player1Turn ? 1 : 2) + " played " + move + " at (" + row + "," + column + ")" );
+		addMessage("Player " + (player1Turn ? 1 : 2) + " " + verb + " " + move + " at (" + row + "," + column + ")" );
 		
 		player1Turn = !player1Turn;
 		
@@ -502,10 +579,34 @@ public class Game extends JFrame {
 		double treePercent = 100 * treeCount / total;
 		double desertPercent = 100 * desertCount / total;
 		
-		grass.setText(String.format("Grass: %.0f%%", grassPercent));
-		desert.setText(String.format("Desert: %.0f%%", desertPercent));
-		tree.setText(String.format("Tree: %.0f%%", treePercent));
-		city.setText(String.format("City: %.0f%%", cityPercent));
+		grass.setText(String.format("%.0f%%", grassPercent));
+		desert.setText(String.format("%.0f%%", desertPercent));
+		tree.setText(String.format("%.0f%%", treePercent));
+		city.setText(String.format("%.0f%%", cityPercent));
+		
+		if( cityPercent > 50.0 )
+			endGame( Selected.CITY );
+		else if( treePercent > 50.0 )
+			endGame( Selected.TREE );
+		else if( desertPercent > 50.0 )
+			endGame( Selected.FIRE );		
+	}
+
+	private void endGame( Selected selection ) {
+		running = false;
+		
+		if( player1Alignment == selection ) {
+			playerTurn.setText("Player 1 Wins!");
+			JOptionPane.showMessageDialog(this, "Player 1 Wins!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
+		}
+		else if( player2Alignment == selection ) {
+			playerTurn.setText("Player 2 Wins!");
+			JOptionPane.showMessageDialog(this, "Player 2 Wins!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
+		}
+		else {
+			playerTurn.setText("Tie!");
+			JOptionPane.showMessageDialog(this, "Tie!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
+		}
 	}
 
 	private void addMessage(String text) {
