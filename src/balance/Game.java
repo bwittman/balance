@@ -57,7 +57,11 @@ public class Game extends JFrame {
 		
 	}
 	
-	private Selected move = Selected.CITY;
+	// Initialized in initializeAlignments()
+	private Selected move;
+	private Selected player1Previous;
+	private Selected player2Previous;
+		
 	private int fireDirection = Fire.NORTH;
 	private boolean player1Turn = true;
 	private boolean running = true;
@@ -251,7 +255,14 @@ public class Game extends JFrame {
 			desertAlignment.setText("Player 2");
 			player2Alignment = Selected.FIRE;
 			break;
-		}		
+		}	
+
+		// Initialize "previous" selections for the players
+
+		player1Previous = player1Alignment;
+		player2Previous = player2Alignment;
+		
+		select(player1Previous);
 	}
 
 	private static JPanel createSelector( JLabel label, JButton button, Square square, ActionListener listener ){
@@ -304,17 +315,37 @@ public class Game extends JFrame {
 			case FIRE: desertAlignment.setText(player); break;
 			}
 			
+			// Select the newly aligned type for the convenience of the player
+			select(alignment);
+			
 			updateBoard();
 			
 			addMessage(player + " aligned with " + alignment);
 			
-			player1Turn = !player1Turn;
-			
-			if( player1Turn )
-				playerTurn.setText("Player 1 Turn");
-			else
-				playerTurn.setText("Player 2 Turn");
+			endTurn();
 		}
+	}
+	
+	private void endTurn() {
+		player1Turn = !player1Turn;
+
+		// Store current selection for the corresponding player
+		// Restore previous selection for the next player
+		if( player1Turn ) {
+			player2Previous = move;
+			select(player1Previous);
+			
+			playerTurn.setText("Player 1 Turn");
+		} else {
+			player1Previous = move;
+			select(player2Previous);
+			
+			playerTurn.setText("Player 2 Turn");
+		}
+		
+		// Reset the fire button each turn
+		fireDirection = Fire.NORTH;
+		new Fire(fireDirection).update(fireButton);
 	}
 	
 	private void updateBoard() {
@@ -325,6 +356,14 @@ public class Game extends JFrame {
 		for( int i = 0; i < ROWS; ++i )
 			for( int j = 0; j < COLUMNS; ++j )
 				board[i][j].update(buttons[i][j]);		
+	}
+	
+	public void select(Selected type) {
+		switch( type ) {
+		case CITY: selectCity(); return;
+		case TREE: selectTree(); return;
+		case FIRE: selectFireDirection(Fire.NORTH); return;
+		}
 	}
 
 	public void selectCity() {
@@ -347,26 +386,34 @@ public class Game extends JFrame {
 		fireSelected.setText("");
 	}
 	
+	public void selectFireDirection(int direction) {
+		if( !running )
+			return;
+
+		move = Selected.FIRE;
+		citySelected.setText("");
+		treeSelected.setText("");
+		fireSelected.setText("Fire Selected");
+		
+		fireDirection = direction;
+		new Fire(fireDirection).update(fireButton);
+	}
+	
 	public void selectFire() {
 		if( !running )
 			return;
 		
 		if( move == Selected.FIRE) {
 			switch( fireDirection ) {
-			case Fire.NORTH: fireDirection = Fire.EAST; break;
-			case Fire.SOUTH: fireDirection = Fire.WEST; break;
-			case Fire.EAST: fireDirection = Fire.SOUTH; break;
-			case Fire.WEST: fireDirection = Fire.NORTH; break;
+			case Fire.NORTH: selectFireDirection(Fire.EAST); return;
+			case Fire.SOUTH: selectFireDirection(Fire.WEST); return;
+			case Fire.EAST: selectFireDirection(Fire.SOUTH); return;
+			case Fire.WEST: selectFireDirection(Fire.NORTH); return;
 			}
 		}
 		else {
-			move = Selected.FIRE;
-			citySelected.setText("");
-			treeSelected.setText("");
-			fireSelected.setText("Fire Selected");
-		}		
-		
-		new Fire(fireDirection).update(fireButton);
+			selectFireDirection(fireDirection);
+		}
 	}	
 	
 	public void clickButton( int row, int column ) {
@@ -410,13 +457,8 @@ public class Game extends JFrame {
 		updateBoard();
 		
 		addMessage("Player " + (player1Turn ? 1 : 2) + " " + verb + " " + move + " at (" + row + "," + column + ")" );
-		
-		player1Turn = !player1Turn;
-		
-		if( player1Turn )
-			playerTurn.setText("Player 1 Turn");
-		else
-			playerTurn.setText("Player 2 Turn");
+
+		endTurn();
 		
 		updateCounts();
 	}
