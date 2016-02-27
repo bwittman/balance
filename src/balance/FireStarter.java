@@ -3,7 +3,7 @@ package balance;
 public class FireStarter implements Player {
 
 	@Override
-	public Move makeMove(Board board) {
+	public Move makeMove(Board board, Game.Selected yourAlignment, Game.Selected otherAlignment ) {
 		int bestRow = 0;
 		int bestRowCount = 0;
 		int bestRowStart = 0;
@@ -32,5 +32,10 @@ public class FireStarter implements Player {
 			return new Move(new Fire(Fire.SOUTH), bestColumnStart, bestColumn );
 		else
 			return new Move(new Fire(Fire.EAST), bestRow, bestRowStart);
+	}
+
+	@Override
+	public String getName() {
+		return "Fire Starter";
 	}
 }

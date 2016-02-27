@@ -40,6 +40,8 @@ public class Game extends JFrame {
 	
 	private Selected player1Alignment;
 	private Selected player2Alignment;
+	private Player player1;
+	private Player player2;
 	
 	enum Selected {
 		CITY("City"),
@@ -67,13 +69,20 @@ public class Game extends JFrame {
 	private boolean running = true;
 
 	public static void main(String[] args) {		
-		new Game();		
+		//new Game();
+		new Launcher();
 	}
 	
 	public Game() {
-		super("Balance");
+		this(null, null, "City", "Tree");
+	}
+	
+	public Game( Player player1, Player player2, String alignment1, String alignment2 ) {
+		super("Balance");		
+		this.player1 = player1;
+		this.player2 = player2;
 		
-		initializeAlignments();
+		initializeAlignments(alignment1, alignment2);
 		
 		JPanel tiles = new JPanel();	
 		tiles.setLayout(new GridLayout(ROWS, COLUMNS));
@@ -211,36 +220,22 @@ public class Game extends JFrame {
 		setVisible(true);
 	}
 	
-	private void initializeAlignments() {
-		String[] alignments = {"City", "Tree", "Fire"}; 
-		
-		String alignment1;		
-		do {
-			alignment1 = (String)JOptionPane.showInputDialog(this, "Player 1, what is your starting alignment?", "Player 1 Alignment", JOptionPane.PLAIN_MESSAGE, null, alignments, alignments[0]);
-		} while( alignment1 == null );
+	private void initializeAlignments(String alignment1, String alignment2) {
 		
 		switch( alignment1 ) {
 		case "City":
-			alignments = new String[]{"Tree", "Fire"};
 			cityAlignment.setText("Player 1");
 			player1Alignment = Selected.CITY;
 			break;
 		case "Tree":
-			alignments = new String[]{"City", "Fire"};
 			treeAlignment.setText("Player 1");
 			player1Alignment = Selected.TREE;
 			break;
-		case "Fire":
-			alignments = new String[]{"City", "Tree"};
+		case "Desert":
 			desertAlignment.setText("Player 1");
 			player1Alignment = Selected.FIRE;
 			break;
 		}
-		
-		String alignment2;		
-		do {
-			alignment2 = (String)JOptionPane.showInputDialog(this, "Player 2, what is your starting alignment?", "Player 2 Alignment", JOptionPane.PLAIN_MESSAGE, null, alignments, alignments[0]);
-		} while( alignment2 == null );		
 		
 		switch( alignment2 ) {
 		case "City":
@@ -251,17 +246,15 @@ public class Game extends JFrame {
 			treeAlignment.setText("Player 2");
 			player2Alignment = Selected.TREE;
 			break;
-		case "Fire":
+		case "Desert":
 			desertAlignment.setText("Player 2");
 			player2Alignment = Selected.FIRE;
 			break;
 		}	
 
 		// Initialize "previous" selections for the players
-
 		player1Previous = player1Alignment;
-		player2Previous = player2Alignment;
-		
+		player2Previous = player2Alignment;		
 		select(player1Previous);
 	}
 
