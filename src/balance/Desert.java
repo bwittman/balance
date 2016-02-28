@@ -14,9 +14,26 @@ public class Desert implements Square {
 	}
 	
 	@Override
-	public void update(JButton button)
-	{
+	public void update(JButton button) {
 		button.setIcon(IMAGE);		
+	}
+
+	@Override
+	public boolean canMoveOn(Square other) {		
+		return false; // Desert is never a legal move
+	}
+	
+	@Override
+	public String toString() {
+		return "Desert";
+	}
+	
+	public String presentVerb() {
+		return "";
+	}
+	
+	public String pastVerb() {
+		return "";
 	}
 
 }

@@ -101,4 +101,22 @@ public class Fire implements Square {
 		return Type.FIRE;
 	}
 
+	@Override
+	public boolean canMoveOn(Square other) {		
+		return other instanceof Tree || other instanceof Grass;
+	}
+	
+	@Override
+	public String toString() {
+		return "Fire";
+	}
+	
+	public String presentVerb() {
+		return "light";
+	}
+	
+	public String pastVerb() {
+		return "lit";
+	}
+
 }

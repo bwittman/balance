@@ -7,9 +7,13 @@ public interface Square {
 		CITY,
 		DESERT,
 		FIRE,
-		TREE
+		TREE,
+		GRASS
 	}
 	
 	Type getType();
 	void update(JButton button);
+	boolean canMoveOn(Square other);
+	String presentVerb();
+	String pastVerb();
 }

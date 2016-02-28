@@ -38,31 +38,21 @@ public class Game extends JFrame {
 	private JLabel city = new JLabel("0%");
 	private JLabel message = new JLabel();
 	
-	private Selected player1Alignment;
-	private Selected player2Alignment;
+	private Square player1Alignment;
+	private Square player2Alignment;
 	private Player player1;
 	private Player player2;
 	
-	enum Selected {
-		CITY("City"),
-		TREE("Tree"),
-		FIRE("Fire");
-		
-		private String name;
-		public String toString() {
-			return name;
-		}
-		
-		private Selected(String name) {
-			this.name = name;
-		}		
-		
-	}
+	private Board boardState = new Board(board);
+	
+	public static final City CITY = new City();
+	public static final Tree TREE = new Tree();
+	public static final Fire FIRE = new Fire();
 	
 	// Initialized in initializeAlignments()
-	private Selected move;
-	private Selected player1Previous;
-	private Selected player2Previous;
+	private Square move;
+	private Square player1Previous;
+	private Square player2Previous;
 		
 	private int fireDirection = Fire.NORTH;
 	private boolean player1Turn = true;
@@ -183,19 +173,19 @@ public class Game extends JFrame {
 		panel.add(createSelector( cityAlignment, new JButton(), new City(), new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				updateAlignment( Selected.CITY );				
+				updateAlignment( CITY );				
 			}}));
 		
 		panel.add(createSelector( treeAlignment, new JButton(), new Tree(), new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				updateAlignment( Selected.TREE );
+				updateAlignment( TREE );
 			}}));
 		
 		panel.add(createSelector( desertAlignment, new JButton(), new Desert(), new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				updateAlignment( Selected.FIRE );
+				updateAlignment( FIRE );
 			}}));
 		
 		display.add(panel);
@@ -218,6 +208,10 @@ public class Game extends JFrame {
 		pack();
 		setResizable(false);
 		setVisible(true);
+		
+		//Start computer playing
+		if( player1 != null )
+			computeMove();
 	}
 	
 	private void initializeAlignments(String alignment1, String alignment2) {
@@ -225,30 +219,30 @@ public class Game extends JFrame {
 		switch( alignment1 ) {
 		case "City":
 			cityAlignment.setText("Player 1");
-			player1Alignment = Selected.CITY;
+			player1Alignment = CITY;
 			break;
 		case "Tree":
 			treeAlignment.setText("Player 1");
-			player1Alignment = Selected.TREE;
+			player1Alignment = TREE;
 			break;
 		case "Desert":
 			desertAlignment.setText("Player 1");
-			player1Alignment = Selected.FIRE;
+			player1Alignment = FIRE;
 			break;
 		}
 		
 		switch( alignment2 ) {
 		case "City":
 			cityAlignment.setText("Player 2");
-			player2Alignment = Selected.CITY;
+			player2Alignment = CITY;
 			break;
 		case "Tree":
 			treeAlignment.setText("Player 2");
-			player2Alignment = Selected.TREE;
+			player2Alignment = TREE;
 			break;
 		case "Desert":
 			desertAlignment.setText("Player 2");
-			player2Alignment = Selected.FIRE;
+			player2Alignment = FIRE;
 			break;
 		}	
 
@@ -273,7 +267,8 @@ public class Game extends JFrame {
 		return panel;
 	}
 	
-	public void updateAlignment( Selected alignment ) {
+	@SuppressWarnings("incomplete-switch")
+	public void updateAlignment( Square alignment ) {
 		if( running && player1Alignment != alignment && player2Alignment != alignment ) {
 			
 			String player = "Player " + (player1Turn ? 1 : 2);
@@ -282,27 +277,27 @@ public class Game extends JFrame {
 				return;
 			
 			if( player1Turn ) {
-				if( player1Alignment == Selected.CITY && alignment != Selected.CITY )
+				if( player1Alignment == CITY && alignment != CITY )
 					cityAlignment.setText("");
-				else if( player1Alignment == Selected.TREE && alignment != Selected.TREE )
+				else if( player1Alignment == TREE && alignment != TREE )
 					treeAlignment.setText("");
-				else if( player1Alignment == Selected.FIRE && alignment != Selected.FIRE )
+				else if( player1Alignment == FIRE && alignment != FIRE )
 					desertAlignment.setText("");	
 				
 				player1Alignment = alignment;
 			}
 			else {
-				if( player2Alignment == Selected.CITY && alignment != Selected.CITY )
+				if( player2Alignment == CITY && alignment != CITY )
 					cityAlignment.setText("");
-				else if( player2Alignment == Selected.TREE && alignment != Selected.TREE )
+				else if( player2Alignment == TREE && alignment != TREE )
 					treeAlignment.setText("");
-				else if( player2Alignment == Selected.FIRE && alignment != Selected.FIRE )
+				else if( player2Alignment == FIRE && alignment != FIRE )
 					desertAlignment.setText("");
 				
 				player2Alignment = alignment;
 			}
 			
-			switch( alignment ) {
+			switch( alignment.getType() ) {
 			case CITY: cityAlignment.setText(player); break;
 			case TREE: treeAlignment.setText(player); break;
 			case FIRE: desertAlignment.setText(player); break;
@@ -313,10 +308,13 @@ public class Game extends JFrame {
 			
 			updateBoard();
 			
-			addMessage(player + " aligned with " + alignment);
-			
+			addMessage(player + " aligned with " + alignment);			
 			endTurn();
 		}
+		else if( (player1Turn && player1 != null) || (!player1Turn && player2 != null ) ) {
+			JOptionPane.showMessageDialog(this, "Computer chose unavailable alignment!", "Unavailable Alignment", JOptionPane.ERROR_MESSAGE);
+			dispose();
+		}			
 	}
 	
 	private void endTurn() {
@@ -339,8 +337,77 @@ public class Game extends JFrame {
 		// Reset the fire button each turn
 		fireDirection = Fire.NORTH;
 		new Fire(fireDirection).update(fireButton);
+		
+		updateCounts();
+		
+		if( running ) {
+			if( player1Turn && player1 != null )
+				computeMove();			
+			else if( !player1Turn && player2 != null )
+				computeMove();
+		}
 	}
 	
+	private void computeMove() {
+		Player player;
+		Square yourAlignment;
+		Square otherAlignment;
+		if( player1Turn ) {
+			player = player1;
+			yourAlignment = player1Alignment;
+			otherAlignment = player2Alignment;
+		}
+		else {
+			player = player2;
+			yourAlignment = player2Alignment;
+			otherAlignment = player1Alignment;
+		}
+		
+		if( player == null )
+			return;
+		
+		boardState.setState(board);
+		Move move = player.makeMove(boardState, yourAlignment, otherAlignment);		
+		
+		if( move == null )
+			return;
+		
+		Square type = move.getType();
+		
+		if( move.isAlignment() ) {
+			if( type instanceof City )
+				updateAlignment( CITY );
+			else if( type instanceof Tree )
+				updateAlignment( TREE );
+			else if( type instanceof Fire )
+				updateAlignment( FIRE );
+			else {
+				JOptionPane.showMessageDialog(this, "Computer chose illegal alignment!", "Illegal Choice", JOptionPane.ERROR_MESSAGE);
+				dispose();
+			}
+		}
+		else {
+			if( type instanceof City )
+				selectCity();
+			else if( type instanceof Tree )
+				selectTree();
+			else if( type instanceof Fire ) {
+				Fire fire = (Fire)type;
+				selectFireDirection(fire.getDirections());
+			}
+			else {
+				JOptionPane.showMessageDialog(this, "Computer selected illegal type of move!", "Illegal Move Type", JOptionPane.ERROR_MESSAGE);
+				dispose();
+			}
+			
+			boolean success = clickButton(move.getRow(), move.getColumn());
+			if( !success ) {
+				JOptionPane.showMessageDialog(this, "Computer made illegal move at (" + move.getRow() + "," + move.getColumn() + ")!", "Illegal Move Type", JOptionPane.ERROR_MESSAGE);
+				dispose();				
+			}
+		}
+	}
+
 	private void updateBoard() {
 		updateFire();
 		updateTree();
@@ -351,8 +418,9 @@ public class Game extends JFrame {
 				board[i][j].update(buttons[i][j]);		
 	}
 	
-	public void select(Selected type) {
-		switch( type ) {
+	@SuppressWarnings("incomplete-switch")
+	public void select(Square type) {
+		switch( type.getType() ) {
 		case CITY: selectCity(); return;
 		case TREE: selectTree(); return;
 		case FIRE: selectFireDirection(Fire.NORTH); return;
@@ -363,7 +431,7 @@ public class Game extends JFrame {
 		if( !running )
 			return;	
 		
-		move = Selected.CITY;
+		move = CITY;
 		citySelected.setText("City Selected");
 		treeSelected.setText("");
 		fireSelected.setText("");
@@ -373,7 +441,7 @@ public class Game extends JFrame {
 		if( !running )
 			return;	
 
-		move = Selected.TREE;
+		move = TREE;
 		citySelected.setText("");
 		treeSelected.setText("Tree Selected");
 		fireSelected.setText("");
@@ -383,7 +451,7 @@ public class Game extends JFrame {
 		if( !running )
 			return;
 
-		move = Selected.FIRE;
+		move = FIRE;
 		citySelected.setText("");
 		treeSelected.setText("");
 		fireSelected.setText("Fire Selected");
@@ -396,7 +464,7 @@ public class Game extends JFrame {
 		if( !running )
 			return;
 		
-		if( move == Selected.FIRE) {
+		if( move == FIRE) {
 			switch( fireDirection ) {
 			case Fire.NORTH: selectFireDirection(Fire.EAST); return;
 			case Fire.SOUTH: selectFireDirection(Fire.WEST); return;
@@ -409,51 +477,27 @@ public class Game extends JFrame {
 		}
 	}	
 	
-	public void clickButton( int row, int column ) {
+	@SuppressWarnings("incomplete-switch")
+	public boolean clickButton( int row, int column ) {
 		if( !running )
-			return;
-		
-		String verb = "";
-		
-		if( move == Selected.CITY ) {
+			return false;		
 			
-			if( canBuild(row, column) ) {
-				board[row][column] = new City();
-				verb = "built";
-			}				
-			else {
-				addMessage("Cannot build city at (" + row + "," + column + ")" );
-				return;
-			}
+		if( move.canMoveOn(board[row][column] )) {						
+			switch( move.getType() ) {
+			case CITY: board[row][column] = new City(); break;
+			case TREE: board[row][column] = new Tree(); break;
+			case FIRE: board[row][column] = new Fire(fireDirection); break;
+			}			
+			
+			updateBoard();			
+			addMessage("Player " + (player1Turn ? 1 : 2) + " " + move.pastVerb() + " " + move + " at (" + row + "," + column + ")" );
+			endTurn();
+			return true;
 		}
-		else if( move == Selected.TREE ) {
-			if( canPlant(row, column) ) {
-				board[row][column] = new Tree();
-				verb = "planted";
-			}
-			else {
-				addMessage("Cannot plant tree at (" + row + "," + column + ")" );
-				return;
-			}
+		else {
+			addMessage("Cannot " + move.presentVerb() + " " + move.toString().toLowerCase() + " at (" + row + "," + column + ")" );
+			return false;
 		}
-		else if( move == Selected.FIRE  ) {
-			if( canBurn(row, column) ) {				
-				board[row][column] = new Fire(fireDirection);
-				verb = "lit";
-			}
-			else {
-				addMessage("Cannot light fire at (" + row + "," + column + ")" );
-				return;
-			}
-		}
-		
-		updateBoard();
-		
-		addMessage("Player " + (player1Turn ? 1 : 2) + " " + verb + " " + move + " at (" + row + "," + column + ")" );
-
-		endTurn();
-		
-		updateCounts();
 	}
 	
 	private void updateCity() {
@@ -463,7 +507,7 @@ public class Game extends JFrame {
 		
 		for( int i = 0; i < ROWS; ++i )
 			for( int j = 0; j < COLUMNS; ++j ) {
-				if( canBuild(i,j) ) {
+				if( CITY.canMoveOn(board[i][j]) ) {
 					int neighboringCities = 0;
 					for( int row = i - 1; row <= i + 1; ++row )
 						for( int column = j - 1; column <= j + 1; ++column )
@@ -521,22 +565,22 @@ public class Game extends JFrame {
 			for( int j = 0; j < COLUMNS; ++j ) {
 				if( board[i][j] instanceof Fire ) {
 					Fire fire = (Fire) board[i][j];
-					if( fire.isHeaded( Fire.NORTH ) && isLegal( i - 1, j ) && canBurn(i - 1, j) ) {
+					if( fire.isHeaded( Fire.NORTH ) && isLegal( i - 1, j ) && fire.canMoveOn(board[i - 1][j]) ) {
 						addFire( i - 1, j, Fire.NORTH );						
 						if( board[i - 1][j] instanceof Tree )
 							addFire( i - 1, j, Fire.EAST );
 					}
-					if( fire.isHeaded( Fire.SOUTH ) && isLegal( i + 1, j ) && canBurn(i + 1, j) ) {
+					if( fire.isHeaded( Fire.SOUTH ) && isLegal( i + 1, j ) && fire.canMoveOn(board[i + 1][j]) ) {
 						addFire( i + 1, j, Fire.SOUTH );						
 						if( board[i + 1][j] instanceof Tree )
 							addFire( i + 1, j, Fire.WEST);
 					}
-					if( fire.isHeaded( Fire.EAST ) && isLegal( i, j + 1 ) && canBurn(i, j + 1) ) {
+					if( fire.isHeaded( Fire.EAST ) && isLegal( i, j + 1 ) && fire.canMoveOn(board[i][j + 1]) ) {
 						addFire( i, j + 1, Fire.EAST );						
 						if( board[i][j + 1] instanceof Tree )
 							addFire( i, j + 1, Fire.SOUTH );
 					}					
-					if( fire.isHeaded( Fire.WEST ) && isLegal( i, j - 1 ) && canBurn(i, j - 1) ) {
+					if( fire.isHeaded( Fire.WEST ) && isLegal( i, j - 1 ) && fire.canMoveOn(board[i][j - 1]) ) {
 						addFire( i, j - 1, Fire.WEST );						
 						if( board[i][j - 1] instanceof Tree )
 							addFire( i, j - 1, Fire.NORTH);
@@ -571,23 +615,7 @@ public class Game extends JFrame {
 	
 	private boolean isCity( int row, int column ) {
 		return isLegal(row, column) && board[row][column] instanceof City;
-	}
-	
-	
-	private boolean canBurn( int row, int column ) {
-		Square square = board[row][column];
-		return square instanceof Grass || square instanceof Tree;
-	}
-	
-	private boolean canBuild( int row, int column ) {
-		Square square = board[row][column];
-		return square instanceof Grass || square instanceof Desert;
-	}
-	
-	private boolean canPlant( int row, int column ) {
-		Square square = board[row][column];
-		return square instanceof Grass || square instanceof Desert || square instanceof City;
-	}
+	}	
 
 	private void updateCounts() {
 		int grassCount = 0;
@@ -620,14 +648,14 @@ public class Game extends JFrame {
 		city.setText(String.format("%.0f%%", cityPercent));
 		
 		if( cityPercent > 50.0 )
-			endGame( Selected.CITY );
+			endGame( CITY );
 		else if( treePercent > 50.0 )
-			endGame( Selected.TREE );
+			endGame( TREE );
 		else if( desertPercent > 50.0 )
-			endGame( Selected.FIRE );		
+			endGame( FIRE );		
 	}
 
-	private void endGame( Selected selection ) {
+	private void endGame( Square selection ) {
 		running = false;
 		
 		if( player1Alignment == selection ) {

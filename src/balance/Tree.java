@@ -14,9 +14,26 @@ public class Tree implements Square {
 	}
 	
 	@Override
-	public void update(JButton button)
-	{
+	public void update(JButton button) {
 		button.setIcon(IMAGE);		
+	}
+
+	@Override
+	public boolean canMoveOn(Square other) {		
+		return other instanceof Grass || other instanceof Desert || other instanceof City;
+	}
+	
+	@Override
+	public String toString() {
+		return "Tree";
+	}
+	
+	public String presentVerb() {
+		return "plant";
+	}
+	
+	public String pastVerb() {
+		return "planted";
 	}
 
 }

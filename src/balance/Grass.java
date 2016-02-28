@@ -9,13 +9,30 @@ public class Grass implements Square {
 	
 	@Override
 	public Type getType() {
-		return Type.CITY;
+		return Type.GRASS;
 	}
 	
 	@Override
-	public void update(JButton button)
-	{
+	public void update(JButton button) {
 		button.setIcon(IMAGE);		
+	}
+
+	@Override
+	public boolean canMoveOn(Square other) {		
+		return false; //Grass is never a legal move
+	}
+	
+	@Override
+	public String toString() {
+		return "Grass";
+	}
+	
+	public String presentVerb() {
+		return "";
+	}
+	
+	public String pastVerb() {
+		return "";
 	}
 
 }

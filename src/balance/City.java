@@ -18,4 +18,22 @@ public class City implements Square {
 	{
 		button.setIcon(IMAGE);		
 	}
+
+	@Override
+	public boolean canMoveOn(Square other) {		
+		return other instanceof Grass || other instanceof Desert;
+	}
+	
+	@Override
+	public String toString() {
+		return "City";
+	}
+	
+	public String presentVerb() {
+		return "build";
+	}
+	
+	public String pastVerb() {
+		return "built";
+	}
 }

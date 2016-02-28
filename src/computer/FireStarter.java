@@ -1,9 +1,14 @@
-package balance;
+package computer;
+
+import balance.*;
 
 public class FireStarter implements Player {
 
 	@Override
-	public Move makeMove(Board board, Game.Selected yourAlignment, Game.Selected otherAlignment ) {
+	public Move makeMove(Board board, Square yourAlignment, Square otherAlignment ) {
+		if( yourAlignment != Game.FIRE && otherAlignment != Game.FIRE )
+			return new Move(new Fire());		
+		
 		int bestRow = 0;
 		int bestRowCount = 0;
 		int bestRowStart = 0;
