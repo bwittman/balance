@@ -207,6 +207,7 @@ public class Game extends JFrame {
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		pack();
 		setResizable(false);
+		setLocationRelativeTo(null); //centers Balance window
 		setVisible(true);
 		
 		//Start computer playing

@@ -69,7 +69,8 @@ public class Launcher extends JFrame implements ActionListener {
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		pack();
 		setResizable(false);
-		setVisible(true);
+		setLocationRelativeTo(null); //centers Launcher window
+		setVisible(true);				
 	}
 
 	private JPanel makeDisplay(int player, JRadioButton city, JRadioButton tree, JRadioButton desert, JRadioButton human, JRadioButton computer, JLabel name) {
