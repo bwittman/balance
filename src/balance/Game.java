@@ -2,6 +2,7 @@ package balance;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -22,6 +23,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 public class Game extends JFrame implements WindowListener {
 	private static final long serialVersionUID = -8705064841297440045L;
@@ -65,8 +68,18 @@ public class Game extends JFrame implements WindowListener {
 	private int fireDirection = Fire.NORTH;
 	private boolean player1Turn = true;
 	private boolean interactive = true;
+	
+	private static final int DISPLAY_WIDTH = 250;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) {        
+		try {
+			UIManager.setLookAndFeel(
+			    UIManager.getSystemLookAndFeelClassName());
+		}
+        catch (ClassNotFoundException | InstantiationException
+				| IllegalAccessException | UnsupportedLookAndFeelException ignore) 
+        {}               
+        
 		new Launcher();
 	}
 	
@@ -92,7 +105,10 @@ public class Game extends JFrame implements WindowListener {
 				board[i][j] = GRASS;
 				buttons[i][j] = new JButton();
 				board[i][j].update(buttons[i][j]);
-				buttons[i][j].setMargin(new Insets(0, 0, 0, 0));				
+				buttons[i][j].setMargin(new Insets(0, 0, 0, 0));
+				buttons[i][j].setContentAreaFilled(false);
+				buttons[i][j].setFocusPainted(false);
+				buttons[i][j].setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 				buttons[i][j].addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent arg0) {
@@ -112,35 +128,35 @@ public class Game extends JFrame implements WindowListener {
 		JPanel panel = new JPanel();
 		panel.add(playerTurn);
 		panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		panel.setMinimumSize(new Dimension(200, 25));
-		panel.setMaximumSize(new Dimension(200, 25));
-		panel.setPreferredSize(new Dimension(200, 25));
+		panel.setMinimumSize(new Dimension(DISPLAY_WIDTH, 25));
+		panel.setMaximumSize(new Dimension(DISPLAY_WIDTH, 25));
+		panel.setPreferredSize(new Dimension(DISPLAY_WIDTH, 25));
 		display.add(panel);
 		
 		display.add(Box.createVerticalStrut(5));
 		
 		
 		panel = new JPanel();
-		panel.setMinimumSize(new Dimension(200, 210));
-		panel.setMaximumSize(new Dimension(200, 210));
-		panel.setPreferredSize(new Dimension(200, 210));
+		panel.setMinimumSize(new Dimension(DISPLAY_WIDTH, 210));
+		panel.setMaximumSize(new Dimension(DISPLAY_WIDTH, 210));
+		panel.setPreferredSize(new Dimension(DISPLAY_WIDTH, 210));
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Next Move"), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 			
 		
-		panel.add(createSelector( citySelected, new JButton(), new City(), new ActionListener() {
+		panel.add(createSelector( citySelected, new JButton(), new City(), "Select City", new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				selectCity();				
 			}}));
 		
-		panel.add(createSelector( treeSelected, new JButton(), new Tree(), new ActionListener() {
+		panel.add(createSelector( treeSelected, new JButton(), new Tree(), "Select Tree", new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				selectTree();				
 			}}));
 		
-		panel.add(createSelector( fireSelected, fireButton, new Fire( Fire.NORTH ), new ActionListener() {
+		panel.add(createSelector( fireSelected, fireButton, new Fire( Fire.NORTH ), "Select Fire", new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				selectFire();				
@@ -151,9 +167,9 @@ public class Game extends JFrame implements WindowListener {
 		display.add(Box.createVerticalStrut(5));
 		
 		panel = new JPanel();
-		panel.setMinimumSize(new Dimension(200, 100));
-		panel.setMaximumSize(new Dimension(200, 100));
-		panel.setPreferredSize(new Dimension(200, 100));
+		panel.setMinimumSize(new Dimension(DISPLAY_WIDTH, 100));
+		panel.setMaximumSize(new Dimension(DISPLAY_WIDTH, 100));
+		panel.setPreferredSize(new Dimension(DISPLAY_WIDTH, 100));
 		panel.setLayout(new GridLayout(4,2));
 		panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Land"), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 		
@@ -171,25 +187,25 @@ public class Game extends JFrame implements WindowListener {
 		display.add(Box.createVerticalStrut(5));
 		
 		panel = new JPanel();
-		panel.setMinimumSize(new Dimension(200, 210));
-		panel.setMaximumSize(new Dimension(200, 210));
-		panel.setPreferredSize(new Dimension(200, 210));
+		panel.setMinimumSize(new Dimension(DISPLAY_WIDTH, 210));
+		panel.setMaximumSize(new Dimension(DISPLAY_WIDTH, 210));
+		panel.setPreferredSize(new Dimension(DISPLAY_WIDTH, 210));
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Alignment"), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 		
-		panel.add(createSelector( cityAlignment, new JButton(), new City(), new ActionListener() {
+		panel.add(createSelector( cityAlignment, new JButton(), new City(), "Change Alignment to City", new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				updateAlignment( CITY );				
 			}}));
 		
-		panel.add(createSelector( treeAlignment, new JButton(), new Tree(), new ActionListener() {
+		panel.add(createSelector( treeAlignment, new JButton(), new Tree(), "Change Alignment to Tree", new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				updateAlignment( TREE );
 			}}));
 		
-		panel.add(createSelector( desertAlignment, new JButton(), new Desert(), new ActionListener() {
+		panel.add(createSelector( desertAlignment, new JButton(), new Desert(), "Change Alignment to Desert", new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				updateAlignment( FIRE );
@@ -202,11 +218,13 @@ public class Game extends JFrame implements WindowListener {
 		panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),"Messages"));
 		JScrollPane scroll = new JScrollPane(messages);
+		Font font = messages.getFont();
+		messages.setFont(font.deriveFont(11f));
 		messages.setEditable(false);		
 		panel.add(scroll, BorderLayout.CENTER);		
-		panel.setMinimumSize(new Dimension(200, 100));
-		panel.setMaximumSize(new Dimension(200, 100));
-		panel.setPreferredSize(new Dimension(200, 100));
+		panel.setMinimumSize(new Dimension(DISPLAY_WIDTH, 100));
+		panel.setMaximumSize(new Dimension(DISPLAY_WIDTH, 100));
+		panel.setPreferredSize(new Dimension(DISPLAY_WIDTH, 100));
 		panel.setAlignmentX(LEFT_ALIGNMENT);
 		display.add(panel);
 		
@@ -283,11 +301,15 @@ public class Game extends JFrame implements WindowListener {
 		select(player1Previous);
 	}
 
-	private static JPanel createSelector( JLabel label, JButton button, Square square, ActionListener listener ){
+	private static JPanel createSelector( JLabel label, JButton button, Square square, String tooltip, ActionListener listener ){
 		JPanel panel = new JPanel();		
 		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));		
 		square.update(button);
-		button.setMargin(new Insets(0, 0, 0, 0));		
+		button.setMargin(new Insets(0, 0, 0, 0));
+		button.setContentAreaFilled(false);
+		button.setFocusPainted(false);
+		button.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+		button.setToolTipText(tooltip);
 		button.addActionListener(listener);
 		panel.add(button, BorderLayout.WEST);
 		panel.add(label, BorderLayout.EAST);
