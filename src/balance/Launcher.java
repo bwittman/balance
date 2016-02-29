@@ -12,6 +12,7 @@ import java.net.URLClassLoader;
 import java.net.URLConnection;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -118,8 +119,9 @@ public class Launcher extends JFrame implements ActionListener {
 
 		panel.add(human);
 		panel.add(computer);
+		panel.add(Box.createVerticalStrut(5));
 		
-		computerPanel.setBorder(BorderFactory.createTitledBorder("Name"));
+		computerPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),"Name:"));
 		computerPanel.add(name);
 		computerPanel.setVisible(false);
 		computerPanel.setAlignmentX(LEFT_ALIGNMENT);

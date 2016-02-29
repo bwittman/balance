@@ -20,6 +20,8 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 
 public class Game extends JFrame implements WindowListener {
 	private static final long serialVersionUID = -8705064841297440045L;
@@ -41,7 +43,7 @@ public class Game extends JFrame implements WindowListener {
 	private JLabel desert = new JLabel("0%");
 	private JLabel tree = new JLabel("0%");
 	private JLabel city = new JLabel("0%");
-	private JLabel message = new JLabel();	
+	private JTextArea messages = new JTextArea("Game Started");	
 	private ComputingMoveDialog display = new ComputingMoveDialog(this); 
 	
 	private Square player1Alignment;
@@ -198,9 +200,10 @@ public class Game extends JFrame implements WindowListener {
 		display.add(Box.createVerticalGlue());
 		
 		panel = new JPanel(new BorderLayout());
-		panel.setBorder(BorderFactory.createTitledBorder("Message"));
-		message.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		panel.add(message, BorderLayout.NORTH);		
+		panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),"Messages"));
+		JScrollPane scroll = new JScrollPane(messages);
+		messages.setEditable(false);		
+		panel.add(scroll, BorderLayout.CENTER);		
 		panel.setMinimumSize(new Dimension(200, 100));
 		panel.setMaximumSize(new Dimension(200, 100));
 		panel.setPreferredSize(new Dimension(200, 100));
@@ -705,7 +708,7 @@ public class Game extends JFrame implements WindowListener {
 	}
 
 	private void addMessage(String text) {
-		message.setText(text);
+		messages.setText(messages.getText() + "\n" + text);
 	}
 
 	@Override
