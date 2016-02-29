@@ -8,7 +8,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.util.concurrent.ExecutionException;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -16,9 +15,11 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.SwingWorker;
 
 public class Game extends JFrame implements WindowListener {
 	private static final long serialVersionUID = -8705064841297440045L;
@@ -63,8 +64,7 @@ public class Game extends JFrame implements WindowListener {
 	private boolean player1Turn = true;
 	private boolean interactive = true;
 
-	public static void main(String[] args) {		
-		//new Game();
+	public static void main(String[] args) {
 		new Launcher();
 	}
 	
@@ -207,7 +207,29 @@ public class Game extends JFrame implements WindowListener {
 		panel.setAlignmentX(LEFT_ALIGNMENT);
 		display.add(panel);
 		
-		add(display, BorderLayout.EAST);
+		add(display, BorderLayout.EAST);		
+		
+		JMenuBar menuBar = new JMenuBar();
+		JMenu menu = new JMenu("File");
+		JMenuItem item = new JMenuItem("New Game");
+		item.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				new Launcher();
+				dispose();				
+			}
+		});
+		menu.add(item);
+		item = new JMenuItem("Exit");
+		item.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {				
+				dispose();				
+			}
+		});
+		menu.add(item);
+		menuBar.add(menu);
+		setJMenuBar(menuBar);
 		
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		pack();
