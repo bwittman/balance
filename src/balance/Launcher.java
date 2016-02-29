@@ -40,20 +40,23 @@ public class Launcher extends JFrame implements ActionListener {
 	JRadioButton player2Computer = new JRadioButton("Computer");
 	JLabel player2ComputerName = new JLabel("");
 	JButton launchGame = new JButton("Launch Game");
+	
+	JPanel computerPanel1 = new JPanel();
+	JPanel computerPanel2 = new JPanel();
 
 	private Player player1 = null;
 	private Player player2 = null;
 
-	private static int ALIGNMENT_WIDTH = 150;
+	private static int ALIGNMENT_WIDTH = 200;
 	private static int ALIGNMENT_HEIGHT = 125;
-	private static int PLAYER_WIDTH = 150;	
-	private static int PLAYER_HEIGHT = 125;
+	private static int PLAYER_WIDTH = 200;	
+	private static int PLAYER_HEIGHT = 150;
 
 	public Launcher() {
 		super("Launcher");
 
-		add(makeDisplay(1, player1City, player1Tree, player1Desert, player1Human, player1Computer, player1ComputerName), BorderLayout.WEST);
-		add(makeDisplay(2, player2City, player2Tree, player2Desert, player2Human, player2Computer, player2ComputerName), BorderLayout.EAST);
+		add(makeDisplay(1, player1City, player1Tree, player1Desert, player1Human, player1Computer, player1ComputerName, computerPanel1), BorderLayout.WEST);
+		add(makeDisplay(2, player2City, player2Tree, player2Desert, player2Human, player2Computer, player2ComputerName, computerPanel2), BorderLayout.EAST);
 
 		player1City.setSelected(true);
 		player2Tree.setSelected(true);
@@ -73,7 +76,7 @@ public class Launcher extends JFrame implements ActionListener {
 		setVisible(true);				
 	}
 
-	private JPanel makeDisplay(int player, JRadioButton city, JRadioButton tree, JRadioButton desert, JRadioButton human, JRadioButton computer, JLabel name) {
+	private JPanel makeDisplay(int player, JRadioButton city, JRadioButton tree, JRadioButton desert, JRadioButton human, JRadioButton computer, JLabel name, JPanel computerPanel) {
 		JPanel display = new JPanel();		
 		display.setLayout(new BoxLayout(display, BoxLayout.Y_AXIS));
 		display.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Player " + player), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
@@ -114,8 +117,14 @@ public class Launcher extends JFrame implements ActionListener {
 		computer.addActionListener(this);				
 
 		panel.add(human);
-		panel.add(computer);		
-		panel.add(name);
+		panel.add(computer);
+		
+		computerPanel.setBorder(BorderFactory.createTitledBorder("Name"));
+		computerPanel.add(name);
+		computerPanel.setVisible(false);
+		computerPanel.setAlignmentX(LEFT_ALIGNMENT);
+		panel.add(computerPanel);		
+		
 		display.add(panel);
 
 		return display;
@@ -149,19 +158,27 @@ public class Launcher extends JFrame implements ActionListener {
 			if( player1Desert.isSelected() )
 				player1City.setSelected(true);
 		}
+		else if( source == player1Human )
+			computerPanel1.setVisible(false);		
 		else if( source == player1Computer ) {
 			player1 = loadComputerPlayer();
 			if( player1 == null )
 				player1Human.setSelected(true);
-			else
-				player1ComputerName.setText("Name: " + player1.getName());			
+			else {
+				player1ComputerName.setText(player1.getName());
+				computerPanel1.setVisible(true);
+			}
 		}
+		else if( source == player2Human )
+			computerPanel2.setVisible(false);
 		else if( source == player2Computer ) {
 			player2 = loadComputerPlayer();
 			if( player2 == null )
 				player2Human.setSelected(true);
-			else
-				player2ComputerName.setText("Name: " + player2.getName());
+			else {
+				player2ComputerName.setText(player2.getName());
+				computerPanel2.setVisible(true);
+			}
 		}
 		else if( source == launchGame ) {
 			String alignment1;

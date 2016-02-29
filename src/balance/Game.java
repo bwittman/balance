@@ -6,6 +6,9 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -15,8 +18,9 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingWorker;
 
-public class Game extends JFrame {
+public class Game extends JFrame implements WindowListener {
 	private static final long serialVersionUID = -8705064841297440045L;
 	public static final int ROWS = 12;
 	public static final int COLUMNS = 12;
@@ -36,7 +40,8 @@ public class Game extends JFrame {
 	private JLabel desert = new JLabel("0%");
 	private JLabel tree = new JLabel("0%");
 	private JLabel city = new JLabel("0%");
-	private JLabel message = new JLabel();
+	private JLabel message = new JLabel();	
+	private ComputingMoveDialog display = new ComputingMoveDialog(this); 
 	
 	private Square player1Alignment;
 	private Square player2Alignment;
@@ -56,7 +61,7 @@ public class Game extends JFrame {
 		
 	private int fireDirection = Fire.NORTH;
 	private boolean player1Turn = true;
-	private boolean running = true;
+	private boolean interactive = true;
 
 	public static void main(String[] args) {		
 		//new Game();
@@ -270,7 +275,10 @@ public class Game extends JFrame {
 	
 	@SuppressWarnings("incomplete-switch")
 	public void updateAlignment( Square alignment ) {
-		if( running && player1Alignment != alignment && player2Alignment != alignment ) {
+		if( !interactive )
+			return;		
+		
+		if( player1Alignment != alignment && player2Alignment != alignment ) {
 			
 			String player = "Player " + (player1Turn ? 1 : 2);
 			
@@ -341,7 +349,7 @@ public class Game extends JFrame {
 		
 		updateCounts();
 		
-		if( running ) {
+		if( interactive ) {
 			if( player1Turn && player1 != null )
 				computeMove();			
 			else if( !player1Turn && player2 != null )
@@ -350,9 +358,9 @@ public class Game extends JFrame {
 	}
 	
 	private void computeMove() {
-		Player player;
-		Square yourAlignment;
-		Square otherAlignment;
+		final Player player;
+		final Square yourAlignment;
+		final Square otherAlignment;
 		if( player1Turn ) {
 			player = player1;
 			yourAlignment = player1Alignment;
@@ -367,9 +375,10 @@ public class Game extends JFrame {
 		if( player == null )
 			return;
 		
-		boardState.setState(board);
-		Move move = player.makeMove(boardState, yourAlignment, otherAlignment);		
-		
+		boardState.setState(board);	
+		display.show(player, boardState, yourAlignment, otherAlignment);
+		Move move = display.getMove();		
+				
 		if( move == null )
 			return;
 		
@@ -429,7 +438,7 @@ public class Game extends JFrame {
 	}
 
 	public void selectCity() {
-		if( !running )
+		if( !interactive )
 			return;	
 		
 		move = CITY;
@@ -439,7 +448,7 @@ public class Game extends JFrame {
 	}
 	
 	public void selectTree() {
-		if( !running )
+		if( !interactive )
 			return;	
 
 		move = TREE;
@@ -449,7 +458,7 @@ public class Game extends JFrame {
 	}
 	
 	public void selectFireDirection(int direction) {
-		if( !running )
+		if( !interactive )
 			return;
 
 		move = FIRE;
@@ -462,7 +471,7 @@ public class Game extends JFrame {
 	}
 	
 	public void selectFire() {
-		if( !running )
+		if( !interactive )
 			return;
 		
 		if( move == FIRE) {
@@ -480,7 +489,7 @@ public class Game extends JFrame {
 	
 	@SuppressWarnings("incomplete-switch")
 	public boolean clickButton( int row, int column ) {
-		if( !running )
+		if( !interactive )
 			return false;		
 			
 		if( move.canMoveOn(board[row][column] )) {						
@@ -657,7 +666,7 @@ public class Game extends JFrame {
 	}
 
 	private void endGame( Square selection ) {
-		running = false;
+		interactive = false;
 		
 		if( player1Alignment == selection ) {
 			playerTurn.setText("Player 1 Wins!");
@@ -676,4 +685,27 @@ public class Game extends JFrame {
 	private void addMessage(String text) {
 		message.setText(text);
 	}
+
+	@Override
+	public void windowActivated(WindowEvent e) {}
+
+	@Override
+	public void windowClosed(WindowEvent e) { 
+		display.dispose();
+	}
+
+	@Override
+	public void windowClosing(WindowEvent e) {}
+
+	@Override
+	public void windowDeactivated(WindowEvent e) {}
+
+	@Override
+	public void windowDeiconified(WindowEvent e) {}
+
+	@Override
+	public void windowIconified(WindowEvent e) {}
+
+	@Override
+	public void windowOpened(WindowEvent e) {}
 }
