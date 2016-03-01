@@ -37,4 +37,9 @@ public class Random implements Player {
 	public String getName() {
 		return "Random";
 	}
+	
+	@Override
+	public Type getType() {
+		return Type.COMPUTER;
+	}
 }

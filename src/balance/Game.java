@@ -9,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.IOException;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -34,7 +35,7 @@ public class Game extends JFrame implements WindowListener {
 	private Square[][] board = new Square[ROWS][COLUMNS]; 
 	private Square[][] swap = new Square[ROWS][COLUMNS];
 	private JButton[][] buttons = new JButton[ROWS][COLUMNS];
-	private JLabel playerTurn = new JLabel("Player 1 Turn");
+	private JLabel playerTurn;
 	private JLabel citySelected = new JLabel("City Selected");
 	private JLabel treeSelected = new JLabel("");
 	private JLabel fireSelected = new JLabel("");
@@ -47,7 +48,7 @@ public class Game extends JFrame implements WindowListener {
 	private JLabel tree = new JLabel("0%");
 	private JLabel city = new JLabel("0%");
 	private JTextArea messages = new JTextArea("Game Started");	
-	private ComputingMoveDialog display = new ComputingMoveDialog(this); 
+	private MoveDialog display = new MoveDialog(this); 
 	
 	private Square player1Alignment;
 	private Square player2Alignment;
@@ -72,25 +73,30 @@ public class Game extends JFrame implements WindowListener {
 	private static final int DISPLAY_WIDTH = 250;
 
 	public static void main(String[] args) {        
+		
 		try {
 			UIManager.setLookAndFeel(
 			    UIManager.getSystemLookAndFeelClassName());
 		}
         catch (ClassNotFoundException | InstantiationException
 				| IllegalAccessException | UnsupportedLookAndFeelException ignore) 
-        {}               
+        {}
+        
+                       
         
 		new Launcher();
 	}
 	
 	public Game() {
-		this(null, null, "City", "Tree");
+		this(new HumanPlayer("Player 1"), new HumanPlayer("Player 2"), "City", "Tree");
 	}
 	
 	public Game( Player player1, Player player2, String alignment1, String alignment2 ) {
 		super("Balance");		
 		this.player1 = player1;
 		this.player2 = player2;
+		
+		playerTurn = new JLabel(getTurnText(player1));
 		
 		initializeAlignments(alignment1, alignment2);
 		
@@ -267,30 +273,30 @@ public class Game extends JFrame implements WindowListener {
 		
 		switch( alignment1 ) {
 		case "City":
-			cityAlignment.setText("Player 1");
+			cityAlignment.setText(player1.getName());
 			player1Alignment = CITY;
 			break;
 		case "Tree":
-			treeAlignment.setText("Player 1");
+			treeAlignment.setText(player1.getName());
 			player1Alignment = TREE;
 			break;
 		case "Desert":
-			desertAlignment.setText("Player 1");
+			desertAlignment.setText(player1.getName());
 			player1Alignment = FIRE;
 			break;
 		}
 		
 		switch( alignment2 ) {
 		case "City":
-			cityAlignment.setText("Player 2");
+			cityAlignment.setText(player2.getName());
 			player2Alignment = CITY;
 			break;
 		case "Tree":
-			treeAlignment.setText("Player 2");
+			treeAlignment.setText(player2.getName());
 			player2Alignment = TREE;
 			break;
 		case "Desert":
-			desertAlignment.setText("Player 2");
+			desertAlignment.setText(player2.getName());
 			player2Alignment = FIRE;
 			break;
 		}	
@@ -325,11 +331,11 @@ public class Game extends JFrame implements WindowListener {
 		if( !interactive )
 			return;		
 		
-		if( player1Alignment != alignment && player2Alignment != alignment ) {
+		if( player1Alignment != alignment && player2Alignment != alignment ) {			
+			Player player = player1Turn ? player1 : player2;
+			Player otherPlayer = player1Turn ? player2 : player1;
 			
-			String player = "Player " + (player1Turn ? 1 : 2);
-			
-			if( JOptionPane.showConfirmDialog(this, player + ", are you sure you want to change alignment to " + alignment + "?", "Change Alignment?", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION )
+			if( player.getType() == Player.Type.HUMAN && JOptionPane.showConfirmDialog(this, player.getName() + ", are you sure you want to change alignment to " + alignment + "?", "Change Alignment?", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION )
 				return;
 			
 			if( player1Turn ) {
@@ -354,23 +360,51 @@ public class Game extends JFrame implements WindowListener {
 			}
 			
 			switch( alignment.getType() ) {
-			case CITY: cityAlignment.setText(player); break;
-			case TREE: treeAlignment.setText(player); break;
-			case FIRE: desertAlignment.setText(player); break;
+			case CITY: cityAlignment.setText(player.getName()); break;
+			case TREE: treeAlignment.setText(player.getName()); break;
+			case FIRE: desertAlignment.setText(player.getName()); break;
 			}
 			
 			// Select the newly aligned type for the convenience of the player
 			select(alignment);
 			
 			updateBoard();
+		
+			addMessage(player.getName() + " aligned with " + alignment);			
+			 			
+			if( otherPlayer instanceof NetworkPlayer ) {
+				NetworkPlayer networkPlayer = (NetworkPlayer) otherPlayer;			
+				try {
+					//TODO: Thread this out for responsiveness?
+					networkPlayer.sendMove(new Move( alignment ));
+				} catch (IOException e) {
+					JOptionPane.showMessageDialog(this, "Network connection error!", "Network Error", JOptionPane.ERROR_MESSAGE);
+					dispose();
+				}
+			}
 			
-			addMessage(player + " aligned with " + alignment);			
 			endTurn();
+			
 		}
-		else if( (player1Turn && player1 != null) || (!player1Turn && player2 != null ) ) {
-			JOptionPane.showMessageDialog(this, "Computer chose unavailable alignment!", "Unavailable Alignment", JOptionPane.ERROR_MESSAGE);
+		else if( (player1Turn && player1.getType() != Player.Type.HUMAN )  ) {
+			JOptionPane.showMessageDialog(this, player1.getName() + " chose unavailable alignment!", "Unavailable Alignment", JOptionPane.ERROR_MESSAGE);
 			dispose();
-		}			
+		}
+		else if( (!player1Turn && player2.getType() == Player.Type.HUMAN ) ) {
+			JOptionPane.showMessageDialog(this, player2.getName() + " chose unavailable alignment!", "Unavailable Alignment", JOptionPane.ERROR_MESSAGE);
+			dispose();
+		}		
+	}
+	
+	private static String getTurnText(Player player) {
+		String type = "";
+		switch(player.getType()) {
+		case COMPUTER: type = "(Computer)";	break;
+		case HUMAN: type = "(Human)";	break;
+		case NETWORK: type = "(Network)";	break;
+		}
+		
+		return player.getName() + "'s Turn " + type;
 	}
 	
 	private void endTurn() {
@@ -378,17 +412,22 @@ public class Game extends JFrame implements WindowListener {
 
 		// Store current selection for the corresponding player
 		// Restore previous selection for the next player
+		Player player;
 		if( player1Turn ) {
 			player2Previous = move;
 			select(player1Previous);
+			player = player1;
 			
-			playerTurn.setText("Player 1 Turn");
+			
 		} else {
 			player1Previous = move;
 			select(player2Previous);
-			
-			playerTurn.setText("Player 2 Turn");
+			player = player2;
 		}
+		
+		
+		
+		playerTurn.setText(getTurnText(player));
 		
 		// Reset the fire button each turn
 		fireDirection = Fire.NORTH;
@@ -397,37 +436,45 @@ public class Game extends JFrame implements WindowListener {
 		updateCounts();
 		
 		if( interactive ) {
-			if( player1Turn && player1 != null )
+			if( player1Turn && player1.getType() != Player.Type.HUMAN )
 				computeMove();			
-			else if( !player1Turn && player2 != null )
+			else if( !player1Turn && player2.getType() != Player.Type.HUMAN )
 				computeMove();
 		}
 	}
 	
 	private void computeMove() {
-		final Player player;
+		final Player player;		
 		final Square yourAlignment;
 		final Square otherAlignment;
 		if( player1Turn ) {
-			player = player1;
+			player = player1;			
 			yourAlignment = player1Alignment;
 			otherAlignment = player2Alignment;
 		}
 		else {
-			player = player2;
+			player = player2;			
 			yourAlignment = player2Alignment;
 			otherAlignment = player1Alignment;
 		}
 		
-		if( player == null )
+		if( player.getType() == Player.Type.HUMAN )
 			return;
 		
 		boardState.setState(board);	
 		display.show(player, boardState, yourAlignment, otherAlignment);
 		Move move = display.getMove();		
 				
-		if( move == null )
-			return;
+		if( move == null ) {
+			if(player.getType() == Player.Type.NETWORK )
+				JOptionPane.showMessageDialog(this, "Network error!  No move was received from " + player.getName() + ".", "Network Error", JOptionPane.ERROR_MESSAGE);
+			else if( player.getType() == Player.Type.COMPUTER )
+				JOptionPane.showMessageDialog(this, "Computer error! " + player.getName() + " failed to make a move.", "Computer Error", JOptionPane.ERROR_MESSAGE);
+			else
+				JOptionPane.showMessageDialog(this, "Null move for unknown reason!", "Unknown Error", JOptionPane.ERROR_MESSAGE);
+			dispose();
+		}
+			
 		
 		Square type = move.getType();
 		
@@ -439,7 +486,7 @@ public class Game extends JFrame implements WindowListener {
 			else if( type instanceof Fire )
 				updateAlignment( FIRE );
 			else {
-				JOptionPane.showMessageDialog(this, "Computer chose illegal alignment!", "Illegal Choice", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, player.getName() + " chose illegal alignment!", "Illegal Choice", JOptionPane.ERROR_MESSAGE);
 				dispose();
 			}
 		}
@@ -453,13 +500,13 @@ public class Game extends JFrame implements WindowListener {
 				selectFireDirection(fire.getDirections());
 			}
 			else {
-				JOptionPane.showMessageDialog(this, "Computer selected illegal type of move!", "Illegal Move Type", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, player.getName() + " selected illegal type of move!", "Illegal Move Type", JOptionPane.ERROR_MESSAGE);
 				dispose();
 			}
 			
 			boolean success = clickButton(move.getRow(), move.getColumn());
 			if( !success ) {
-				JOptionPane.showMessageDialog(this, "Computer made illegal move at (" + move.getRow() + "," + move.getColumn() + ")!", "Illegal Move Type", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, player.getName() + " made illegal move at (" + move.getRow() + "," + move.getColumn() + ")!", "Illegal Move Type", JOptionPane.ERROR_MESSAGE);
 				dispose();				
 			}
 		}
@@ -538,16 +585,35 @@ public class Game extends JFrame implements WindowListener {
 	public boolean clickButton( int row, int column ) {
 		if( !interactive )
 			return false;		
-			
-		if( move.canMoveOn(board[row][column] )) {						
+		
+		
+		
+		if( move.canMoveOn(board[row][column] )) {
+			Square square = null;			
 			switch( move.getType() ) {
-			case CITY: board[row][column] = new City(); break;
-			case TREE: board[row][column] = new Tree(); break;
-			case FIRE: board[row][column] = new Fire(fireDirection); break;
+			case CITY: square = new City(); break;
+			case TREE: square = new Tree(); break;
+			case FIRE: square = new Fire(fireDirection); break;
+			}
+			board[row][column] = square;			
+			updateBoard();
+			
+			Player player = player1Turn ? player1 : player2;
+			Player otherPlayer = player1Turn ? player2 : player1;
+			
+			addMessage(player.getName() + " " + move.pastVerb() + " " + move + " at (" + row + "," + column + ")" );
+			 			
+			if( otherPlayer instanceof NetworkPlayer ) {
+				//TODO: Thread this out for responsiveness?
+				NetworkPlayer networkPlayer = (NetworkPlayer) otherPlayer;			
+				try {
+					networkPlayer.sendMove(new Move( square, row, column ));
+				} catch (IOException e) {					
+					JOptionPane.showMessageDialog(this, "Network connection error!", "Network Error", JOptionPane.ERROR_MESSAGE);
+					dispose();
+				}
 			}			
 			
-			updateBoard();			
-			addMessage("Player " + (player1Turn ? 1 : 2) + " " + move.pastVerb() + " " + move + " at (" + row + "," + column + ")" );
 			endTurn();
 			return true;
 		}
@@ -739,6 +805,16 @@ public class Game extends JFrame implements WindowListener {
 	@Override
 	public void windowClosed(WindowEvent e) { 
 		display.dispose();
+		
+		if( player1 instanceof NetworkPlayer ) {
+			NetworkPlayer player = (NetworkPlayer) player1;
+			player.close();
+		}
+		
+		if( player2 instanceof NetworkPlayer ) {
+			NetworkPlayer player = (NetworkPlayer) player2;
+			player.close();
+		}
 	}
 
 	@Override

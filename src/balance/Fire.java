@@ -3,8 +3,8 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
-public class Fire implements Square {	
-	
+public class Fire implements Square {
+	private static final long serialVersionUID = -4850786399099981034L;
 	public static final int NORTH = 1;
 	public static final int SOUTH = 2;
 	public static final int EAST = 4;

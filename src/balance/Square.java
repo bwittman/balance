@@ -1,7 +1,9 @@
 package balance;
+import java.io.Serializable;
+
 import javax.swing.JButton;
 
-public interface Square {
+public interface Square extends Serializable {
 	
 	enum Type {
 		CITY,

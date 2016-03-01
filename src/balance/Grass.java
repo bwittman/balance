@@ -3,7 +3,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
 public class Grass implements Square {
-
+	private static final long serialVersionUID = -6690144932033888753L;
 	private static final String FILE = "grass.png";
 	private static final ImageIcon IMAGE = new ImageIcon(FILE);
 	

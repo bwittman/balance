@@ -1,6 +1,12 @@
 package computer;
 
-import balance.*;
+import balance.Board;
+import balance.City;
+import balance.Fire;
+import balance.Move;
+import balance.Player;
+import balance.Square;
+import balance.Tree;
 
 /**
  * Class is used to test delay functionality when a computer opponent is
@@ -56,5 +62,10 @@ public class RandomWithDelay implements Player {
 	@Override
 	public String getName() {
 		return "Random with Delay";
+	}
+	
+	@Override
+	public Type getType() {
+		return Type.COMPUTER;
 	}
 }

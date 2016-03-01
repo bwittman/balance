@@ -4,7 +4,7 @@ import javax.swing.JButton;
 
 
 public class Tree implements Square {
-
+	private static final long serialVersionUID = -7242213010371500051L;
 	private static final String FILE = "tree.png";
 	private static final ImageIcon IMAGE = new ImageIcon(FILE);
 	

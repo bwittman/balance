@@ -2,9 +2,9 @@ package balance;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
-
 public class City implements Square {
-	
+
+	private static final long serialVersionUID = -172215257689518701L;
 	private static final String FILE = "city.png";
 	private static final ImageIcon IMAGE = new ImageIcon(FILE);
 	

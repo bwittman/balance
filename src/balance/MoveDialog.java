@@ -11,7 +11,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 
-public class ComputingMoveDialog extends JDialog implements HierarchyListener {
+public class MoveDialog extends JDialog implements HierarchyListener {
 	private static final long serialVersionUID = 996893340528209319L;
 	private JLabel label = new JLabel("Computer player is calculating its next move.");	
 	private volatile Player player;
@@ -20,8 +20,8 @@ public class ComputingMoveDialog extends JDialog implements HierarchyListener {
 	private volatile Square yourAlignment;
 	private volatile Square otherAlignment;	
 	
-	public ComputingMoveDialog(JFrame frame) {
-		super(frame, "Computer Moving", true);
+	public MoveDialog(JFrame frame) {
+		super(frame, "Waiting on Move", true);
 		JPanel panel = new JPanel();
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.add(label);
@@ -52,7 +52,7 @@ public class ComputingMoveDialog extends JDialog implements HierarchyListener {
 	@Override
     public void hierarchyChanged(HierarchyEvent e) {
         if (isVisible()) {
-        	label.setText("Computer player " + player.getName() + " is calculating its next move.");
+        	label.setText(player.getName() + " (" + player.getType() + ") is calculating their next move.");
         	pack();                	
         	SwingWorker<Move,Object> worker = new SwingWorker<Move,Object>() {
     			@Override
@@ -63,10 +63,10 @@ public class ComputingMoveDialog extends JDialog implements HierarchyListener {
     			 @Override
     	       protected void done() {
     	           try {
-    	        	   move = get();
-    	        	   setVisible(false);
+    	        	   move = get();    	        	  
     	           } catch (Exception ignore) {
     	           }
+    	           setVisible(false);
     	       }
     		};		
     		worker.execute();

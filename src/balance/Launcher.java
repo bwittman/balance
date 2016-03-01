@@ -16,13 +16,15 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.filechooser.FileFilter;
+import javax.swing.JTextField;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class Launcher extends JFrame implements ActionListener {
 	private static final long serialVersionUID = 6234049734851858113L;
@@ -34,35 +36,30 @@ public class Launcher extends JFrame implements ActionListener {
 	JRadioButton player2Tree = new JRadioButton("Tree");
 	JRadioButton player2Desert = new JRadioButton("Desert");
 
-	JRadioButton player1Human = new JRadioButton("Human");
-	JRadioButton player1Computer = new JRadioButton("Computer");
-	JLabel player1ComputerName = new JLabel("");
-	JRadioButton player2Human = new JRadioButton("Human");
-	JRadioButton player2Computer = new JRadioButton("Computer");
-	JLabel player2ComputerName = new JLabel("");
+	JComboBox<String> player1Select = new JComboBox<String>( new String[] { "Human", "Computer", "Network"});
+	JTextField player1Name = new JTextField(20);	
+	JComboBox<String> player2Select = new JComboBox<String>( new String[] { "Human", "Computer", "Network"});
+	JTextField player2Name = new JTextField(20);
 	JButton launchGame = new JButton("Launch Game");
 	
-	JPanel computerPanel1 = new JPanel();
-	JPanel computerPanel2 = new JPanel();
-
-	private Player player1 = null;
-	private Player player2 = null;
+	private Player player1 = new HumanPlayer("Player 1");
+	private Player player2 = new HumanPlayer("Player 2");
 
 	private static int ALIGNMENT_WIDTH = 200;
 	private static int ALIGNMENT_HEIGHT = 125;
 	private static int PLAYER_WIDTH = 200;	
-	private static int PLAYER_HEIGHT = 150;
+	private static int PLAYER_HEIGHT = 25;
 
 	public Launcher() {
 		super("Launcher");
 
-		add(makeDisplay(1, player1City, player1Tree, player1Desert, player1Human, player1Computer, player1ComputerName, computerPanel1), BorderLayout.WEST);
-		add(makeDisplay(2, player2City, player2Tree, player2Desert, player2Human, player2Computer, player2ComputerName, computerPanel2), BorderLayout.EAST);
+		add(makeDisplay(1, player1City, player1Tree, player1Desert, player1Select, player1Name), BorderLayout.WEST);
+		add(makeDisplay(2, player2City, player2Tree, player2Desert, player2Select, player2Name), BorderLayout.EAST);
 
 		player1City.setSelected(true);
 		player2Tree.setSelected(true);
-		player1Human.setSelected(true);
-		player2Human.setSelected(true);
+		player1Select.setSelectedIndex(0);
+		player2Select.setSelectedIndex(0);
 
 		launchGame.addActionListener(this);
 
@@ -77,12 +74,35 @@ public class Launcher extends JFrame implements ActionListener {
 		setVisible(true);				
 	}
 
-	private JPanel makeDisplay(int player, JRadioButton city, JRadioButton tree, JRadioButton desert, JRadioButton human, JRadioButton computer, JLabel name, JPanel computerPanel) {
+	private JPanel makeDisplay(int player, JRadioButton city, JRadioButton tree, JRadioButton desert, JComboBox<String> select, JTextField name) {
 		JPanel display = new JPanel();		
 		display.setLayout(new BoxLayout(display, BoxLayout.Y_AXIS));
-		display.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Player " + player), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-
+		display.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5), BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Player " + player), BorderFactory.createEmptyBorder(5, 5, 5, 5))));
+		
+		//add Name
 		JPanel panel = new JPanel();
+		panel.setMinimumSize(new Dimension(PLAYER_WIDTH, PLAYER_HEIGHT));
+		panel.setMaximumSize(new Dimension(PLAYER_WIDTH, PLAYER_HEIGHT));
+		panel.setPreferredSize(new Dimension(PLAYER_WIDTH, PLAYER_HEIGHT));
+		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+		panel.add(new JLabel("Name"));
+		panel.add(Box.createHorizontalStrut(5));
+		name.setText("Player " + player);
+		panel.add(name);
+		panel.setAlignmentX(LEFT_ALIGNMENT);
+		display.add(panel);
+		
+		display.add(Box.createVerticalStrut(5));
+		
+		//add Human/Computer/Network combo box
+		select.addActionListener(this);
+		select.setAlignmentX(LEFT_ALIGNMENT);
+		display.add(select);
+		
+		display.add(Box.createVerticalStrut(5));
+		
+		//add Alignment panel
+		panel = new JPanel();
 		panel.setMinimumSize(new Dimension(ALIGNMENT_WIDTH, ALIGNMENT_HEIGHT));
 		panel.setMaximumSize(new Dimension(ALIGNMENT_WIDTH, ALIGNMENT_HEIGHT));
 		panel.setPreferredSize(new Dimension(ALIGNMENT_WIDTH, ALIGNMENT_HEIGHT));
@@ -94,40 +114,19 @@ public class Launcher extends JFrame implements ActionListener {
 		group.add(tree);
 		group.add(desert);
 
+		
 		city.addActionListener(this);
 		tree.addActionListener(this);
 		desert.addActionListener(this);
 
+		panel.add(Box.createVerticalGlue());
 		panel.add(city);
 		panel.add(tree);
 		panel.add(desert);
+		panel.add(Box.createVerticalGlue());
 		display.add(panel);
 
-		panel = new JPanel();
-		panel.setMinimumSize(new Dimension(PLAYER_WIDTH, PLAYER_HEIGHT));
-		panel.setMaximumSize(new Dimension(PLAYER_WIDTH, PLAYER_HEIGHT));
-		panel.setPreferredSize(new Dimension(PLAYER_WIDTH, PLAYER_HEIGHT));
-		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-		panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Player"), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-
-		group = new ButtonGroup();
-		group.add(human);
-		group.add(computer);		
-
-		human.addActionListener(this);
-		computer.addActionListener(this);				
-
-		panel.add(human);
-		panel.add(computer);
-		panel.add(Box.createVerticalStrut(5));
 		
-		computerPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),"Name:"));
-		computerPanel.add(name);
-		computerPanel.setVisible(false);
-		computerPanel.setAlignmentX(LEFT_ALIGNMENT);
-		panel.add(computerPanel);		
-		
-		display.add(panel);
 
 		return display;
 	}
@@ -160,27 +159,54 @@ public class Launcher extends JFrame implements ActionListener {
 			if( player1Desert.isSelected() )
 				player1City.setSelected(true);
 		}
-		else if( source == player1Human )
-			computerPanel1.setVisible(false);		
-		else if( source == player1Computer ) {
-			player1 = loadComputerPlayer();
-			if( player1 == null )
-				player1Human.setSelected(true);
-			else {
-				player1ComputerName.setText(player1.getName());
-				computerPanel1.setVisible(true);
+		else if( source == player1Select ) {
+			if( player1Select.getSelectedItem().equals("Human")) {
+				player1Name.setEditable(true);				
 			}
+			else if( player1Select.getSelectedItem().equals("Computer")) {
+				player1Name.setEditable(false);
+				player1 = loadComputerPlayer();
+				if( player1 == null )
+					player1Select.setSelectedItem("Human");
+				else
+					player1Name.setText(player1.getName());
+			}
+			else if( player1Select.getSelectedItem().equals("Network")) {
+				player1Name.setEditable(false);
+				NetworkDialog dialog = new NetworkDialog(this, 1);
+				player1 = dialog.getPlayer();
+				if( player1 == null ) {
+					player1Select.setSelectedItem("Human");
+					JOptionPane.showMessageDialog(this, "Network connection problem!", "Network Problem", JOptionPane.ERROR_MESSAGE);
+				}
+				else
+					player1Name.setText(player1.getName());
+			}
+				
 		}
-		else if( source == player2Human )
-			computerPanel2.setVisible(false);
-		else if( source == player2Computer ) {
-			player2 = loadComputerPlayer();
-			if( player2 == null )
-				player2Human.setSelected(true);
-			else {
-				player2ComputerName.setText(player2.getName());
-				computerPanel2.setVisible(true);
+		else if( source == player2Select ) {
+			if( player2Select.getSelectedItem().equals("Human")) {
+				player2Name.setEditable(true);				
 			}
+			else if( player2Select.getSelectedItem().equals("Computer")) {
+				player2Name.setEditable(false);
+				player2 = loadComputerPlayer();
+				if( player2 == null )
+					player2Select.setSelectedItem("Human");
+				else
+					player2Name.setText(player2.getName());
+			}
+			else if( player2Select.getSelectedItem().equals("Network")) {
+				player2Name.setEditable(false);
+				NetworkDialog dialog = new NetworkDialog(this, 2);
+				player2 = dialog.getPlayer();
+				if( player2 == null ) {
+					player2Select.setSelectedItem("Human");
+					JOptionPane.showMessageDialog(this, "Network connection problem!", "Network Problem", JOptionPane.ERROR_MESSAGE);
+				}
+				else
+					player2Name.setText(player2.getName());
+			}				
 		}
 		else if( source == launchGame ) {
 			String alignment1;
@@ -199,10 +225,24 @@ public class Launcher extends JFrame implements ActionListener {
 				alignment2 = "Tree";
 			else
 				alignment2 = "Desert";
+			
+			if( player1Select.getSelectedItem().equals("Human") )
+				player1 = new HumanPlayer(fixName(player1Name.getText(), 1));
+			
+			if( player2Select.getSelectedItem().equals("Human") )
+				player2 = new HumanPlayer(fixName(player2Name.getText(), 2));
 
 			new Game( player1, player2, alignment1, alignment2 );
 			dispose();
 		}
+	}
+	
+	private static String fixName(String name, int number) {
+		name = name.trim();
+		if( name.isEmpty() )
+			return "Player " + number;
+		else
+			return name;
 	}
 
 	public static class ComputerClassLoader extends URLClassLoader {		
@@ -235,16 +275,9 @@ public class Launcher extends JFrame implements ActionListener {
 
 	private Player loadComputerPlayer() {
 		JFileChooser chooser = new JFileChooser();
-		chooser.setFileFilter(new FileFilter() {
-			@Override
-			public boolean accept(File file) {				
-				return file.isDirectory() || file.getName().endsWith(".class");
-			}
-
-			@Override
-			public String getDescription() {				
-				return "Class files (*.class)";
-			}});		
+		FileNameExtensionFilter filter = new FileNameExtensionFilter(
+		        "Class files (*.class)", "class");
+		chooser.setFileFilter(filter);
 
 		if( chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION ) {			
 			File file = chooser.getSelectedFile();

@@ -1,7 +1,9 @@
 package balance;
 
-public class Move {
-	
+import java.io.Serializable;
+
+public class Move implements Serializable {
+	private static final long serialVersionUID = -5270901492699547173L;
 	private final boolean alignment;
 	private final int row;
 	private final int column;

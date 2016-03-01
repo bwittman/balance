@@ -4,7 +4,7 @@ import javax.swing.JButton;
 
 
 public class Desert implements Square {
-
+	private static final long serialVersionUID = -1495062103219122388L;
 	private static final String FILE = "desert.png";
 	private static final ImageIcon IMAGE = new ImageIcon(FILE);
 	

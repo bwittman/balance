@@ -43,4 +43,9 @@ public class FireStarter implements Player {
 	public String getName() {
 		return "Fire Starter";
 	}
+	
+	@Override
+	public Type getType() {
+		return Type.COMPUTER;
+	}
 }
