@@ -473,6 +473,7 @@ public class Game extends JFrame implements WindowListener {
 			else
 				JOptionPane.showMessageDialog(this, "Null move for unknown reason!", "Unknown Error", JOptionPane.ERROR_MESSAGE);
 			dispose();
+			return;
 		}
 			
 		

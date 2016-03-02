@@ -161,70 +161,60 @@ public class Launcher extends JFrame implements ActionListener {
 		}
 		else if( source == player1Select ) {
 			if( player1Select.getSelectedItem().equals("Human")) {
-				player1Name.setEditable(true);				
+				enableSelections();			
 			}
 			else if( player1Select.getSelectedItem().equals("Computer")) {
-				player1Name.setEditable(false);
+				enableSelections();				
 				player1 = loadComputerPlayer();
 				if( player1 == null )
 					player1Select.setSelectedItem("Human");
 				else
-					player1Name.setText(player1.getName());
+					player1Name.setText(player1.getName());				
 			}
-			else if( player1Select.getSelectedItem().equals("Network")) {
-				player1Name.setEditable(false);
-				NetworkDialog dialog = new NetworkDialog(this, 1);
+			else if( player1Select.getSelectedItem().equals("Network")) {				
+				NetworkDialog dialog = new NetworkDialog(this, new PlayerData(1, 2, player1Alignment(), player2Alignment(), fixName(player2Name.getText(), 2)));
 				player1 = dialog.getPlayer();
-				if( player1 == null ) {
+				if( player1 == null || dialog.isCanceled()  ) {					
+					if( !dialog.isCanceled() )
+						JOptionPane.showMessageDialog(this, "Network connection problem!", "Network Problem", JOptionPane.ERROR_MESSAGE);
 					player1Select.setSelectedItem("Human");
-					JOptionPane.showMessageDialog(this, "Network connection problem!", "Network Problem", JOptionPane.ERROR_MESSAGE);
 				}
-				else
+				else {
 					player1Name.setText(player1.getName());
+					disableSelections();
+				}
 			}
 				
 		}
 		else if( source == player2Select ) {
-			if( player2Select.getSelectedItem().equals("Human")) {
-				player2Name.setEditable(true);				
+			if( player2Select.getSelectedItem().equals("Human")) {						
+				enableSelections();
 			}
 			else if( player2Select.getSelectedItem().equals("Computer")) {
-				player2Name.setEditable(false);
+				enableSelections();				
 				player2 = loadComputerPlayer();
 				if( player2 == null )
 					player2Select.setSelectedItem("Human");
 				else
 					player2Name.setText(player2.getName());
 			}
-			else if( player2Select.getSelectedItem().equals("Network")) {
-				player2Name.setEditable(false);
-				NetworkDialog dialog = new NetworkDialog(this, 2);
+			else if( player2Select.getSelectedItem().equals("Network")) {				
+				NetworkDialog dialog = new NetworkDialog(this, new PlayerData(2, 1, player2Alignment(), player1Alignment(), fixName(player1Name.getText(), 1)));
 				player2 = dialog.getPlayer();
-				if( player2 == null ) {
+				if( player2 == null || dialog.isCanceled() ) {					
+					if( !dialog.isCanceled() )
+						JOptionPane.showMessageDialog(this, "Network connection problem!", "Network Problem", JOptionPane.ERROR_MESSAGE);
 					player2Select.setSelectedItem("Human");
-					JOptionPane.showMessageDialog(this, "Network connection problem!", "Network Problem", JOptionPane.ERROR_MESSAGE);
 				}
-				else
+				else {					
 					player2Name.setText(player2.getName());
+					disableSelections();
+				}
 			}				
 		}
 		else if( source == launchGame ) {
-			String alignment1;
-			String alignment2;
-
-			if( player1City.isSelected() )
-				alignment1 = "City";
-			else if( player1Tree.isSelected() )
-				alignment1 = "Tree";
-			else
-				alignment1 = "Desert";
-
-			if( player2City.isSelected() )
-				alignment2 = "City";
-			else if( player2Tree.isSelected() )
-				alignment2 = "Tree";
-			else
-				alignment2 = "Desert";
+			String alignment1 = player1Alignment();
+			String alignment2 = player2Alignment();
 			
 			if( player1Select.getSelectedItem().equals("Human") )
 				player1 = new HumanPlayer(fixName(player1Name.getText(), 1));
@@ -235,6 +225,80 @@ public class Launcher extends JFrame implements ActionListener {
 			new Game( player1, player2, alignment1, alignment2 );
 			dispose();
 		}
+	}
+	
+	private void disableSelections() {
+		player1Name.setEnabled(false);
+		player1Name.setToolTipText("Cannot change name after establishing network connection");
+		player2Name.setEnabled(false);
+		player2Name.setToolTipText("Cannot change name after establishing network connection");
+		if( !player1Select.getSelectedItem().equals("Network") ) {
+			player1Select.setEnabled(false);
+			player1Select.setToolTipText("Cannot change selection after establishing network connection");
+		}
+		if( !player2Select.getSelectedItem().equals("Network") ) {
+			player2Select.setEnabled(false);
+			player2Select.setToolTipText("Cannot change selection after establishing network connection");
+		}
+		player1City.setEnabled(false);
+		player1City.setToolTipText("Cannot change alignment after establishing network connection");
+		player1Tree.setEnabled(false);
+		player1Tree.setToolTipText("Cannot change alignment after establishing network connection");
+		player1Desert.setEnabled(false);
+		player1Desert.setToolTipText("Cannot change alignment after establishing network connection");
+		player2City.setEnabled(false);
+		player2City.setToolTipText("Cannot change alignment after establishing network connection");
+		player2Tree.setEnabled(false);
+		player2Tree.setToolTipText("Cannot change alignment after establishing network connection");
+		player2Desert.setEnabled(false);
+		player2Desert.setToolTipText("Cannot change alignment after establishing network connection");
+	}
+	
+	private void enableSelections() {
+		if( player1Select.getSelectedItem().equals("Human"))
+			player1Name.setEnabled(true);
+		else
+			player1Name.setEnabled(false);
+		player1Name.setToolTipText("");
+		if( player2Select.getSelectedItem().equals("Human"))
+			player2Name.setEnabled(true);
+		else
+			player2Name.setEnabled(false);
+		player1Select.setEnabled(true);
+		player1Select.setToolTipText("");
+		player2Select.setEnabled(true);
+		player2Select.setToolTipText("");
+		player2Name.setToolTipText("");
+		player1City.setEnabled(true);
+		player1City.setToolTipText("");
+		player1Tree.setEnabled(true);
+		player1Tree.setToolTipText("");
+		player1Desert.setEnabled(true);
+		player1Desert.setToolTipText("");
+		player2City.setEnabled(true);
+		player2City.setToolTipText("");
+		player2Tree.setEnabled(true);
+		player2Tree.setToolTipText("");
+		player2Desert.setEnabled(true);
+		player2Desert.setToolTipText("");
+	}
+
+	private String player1Alignment() {
+		if( player1City.isSelected() )
+			return "City";
+		else if( player1Tree.isSelected() )
+			return "Tree";
+		else
+			return "Desert";
+	}
+	
+	private String player2Alignment() {
+		if( player2City.isSelected() )
+			return "City";
+		else if( player2Tree.isSelected() )
+			return "Tree";
+		else
+			return "Desert";
 	}
 	
 	private static String fixName(String name, int number) {

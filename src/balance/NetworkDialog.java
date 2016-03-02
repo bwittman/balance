@@ -6,6 +6,8 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
@@ -21,9 +23,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 
-public class NetworkDialog extends JDialog implements ActionListener {
-	private static final long serialVersionUID = -6942340314284143360L;
-	private int number;	
+public class NetworkDialog extends JDialog implements ActionListener, WindowListener {
+	private static final long serialVersionUID = -6942340314284143360L;	
 	private JComboBox<String> connectionType = new JComboBox<String>( new String[]{ "Client", "Server"} );	
 	private JTextField portField = new JTextField();
 	private JTextField ipField = new JTextField();
@@ -31,15 +32,18 @@ public class NetworkDialog extends JDialog implements ActionListener {
 	private JButton connectButton = new JButton("Connect");
 	private JButton cancelButton = new JButton("Cancel");
 	private NetworkPlayer player = null;
+	private PlayerData data;
+	
+	private boolean canceled = false;
 	
 	private static int LABEL_WIDTH = 100;
 	private static int LABEL_HEIGHT = 25;
 	private static int FIELD_WIDTH = 150;
 	private static int FIELD_HEIGHT = 25;
 	
-	public NetworkDialog(JFrame frame, int number) {
-		super(frame, "Network Connection", true);		
-		this.number = number;
+	public NetworkDialog(JFrame frame, PlayerData data) {
+		super(frame, "Network Connection", true);
+		this.data = data;
 		
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -71,7 +75,7 @@ public class NetworkDialog extends JDialog implements ActionListener {
 		pack();
 		setResizable(false);
 		setLocationRelativeTo(frame); //centers Balance window
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);		
+		//setDefaultCloseOperation(DISPOSE_ON_CLOSE);		
 		setVisible(true);
 	}
 	
@@ -143,9 +147,9 @@ public class NetworkDialog extends JDialog implements ActionListener {
     			@Override
     			public NetworkPlayer doInBackground() throws Exception {
     				if( client )
-    					return new NetworkPlayer(number, Integer.parseInt(portField.getText()), ipField.getText() );
+    					return new NetworkPlayer(data, Integer.parseInt(portField.getText()), ipField.getText() );
     				else
-    					return new NetworkPlayer(number, Integer.parseInt(portField.getText()) );
+    					return new NetworkPlayer(data, Integer.parseInt(portField.getText()) );
     			}
     			
     			 @Override
@@ -160,8 +164,10 @@ public class NetworkDialog extends JDialog implements ActionListener {
     		};		
     		worker.execute();			
 		}
-		else if( source == cancelButton )
+		else if( source == cancelButton ) {
+			canceled = true;
 			dispose();		
+		}
 	}
 	
 	private static boolean isValidIp(String ip) {		
@@ -183,4 +189,32 @@ public class NetworkDialog extends JDialog implements ActionListener {
 	public NetworkPlayer getPlayer() {
 		return player;
 	}
+	
+	public boolean isCanceled() {
+		return canceled;
+	}
+
+	@Override
+	public void windowActivated(WindowEvent arg0) {}
+
+	@Override
+	public void windowClosed(WindowEvent arg0) {}
+
+	@Override
+	public void windowClosing(WindowEvent arg0) {
+		canceled = true;
+		dispose();
+	}
+
+	@Override
+	public void windowDeactivated(WindowEvent arg0) {}
+
+	@Override
+	public void windowDeiconified(WindowEvent arg0) {}
+
+	@Override
+	public void windowIconified(WindowEvent arg0) {}
+
+	@Override
+	public void windowOpened(WindowEvent arg0) {}
 }

@@ -13,45 +13,53 @@ public class NetworkPlayer implements Player {
 	
 	private Socket socket;
 	private ObjectOutputStream out; 
-	private ObjectInputStream in; 
+	private ObjectInputStream in;
+	private String name;
 	
 	//Server version
-	public NetworkPlayer( int number, int port ) throws IOException {
+	public NetworkPlayer( PlayerData data, int port ) throws IOException, ClassNotFoundException {
 		ServerSocket serverSocket = new ServerSocket( port );	
 		socket = serverSocket.accept();
 		serverSocket.close();
 		in = new ObjectInputStream(socket.getInputStream()) ;
 		out = new ObjectOutputStream(socket.getOutputStream() );
 		
-		int other = in.readInt();		
-		out.writeInt(number);	
+		PlayerData otherData = (PlayerData)in.readObject();		
+		out.writeObject(data);	
 		out.flush();		
 		
-		//Player 1 connects to Player 2 or vice versa
-		//Player 1 connecting to Player 1 makes no sense
-		if( other == number ) {			
-			JOptionPane.showMessageDialog(null, "Networked players are numbered inconsistently!", "Inconsistent Players", JOptionPane.ERROR_MESSAGE);
-			throw new IOException();
-		}
-			
+		checkConsistency(data, otherData);		
+		name = otherData.getOtherName();
 	}
 		
 	//Client version
-	public NetworkPlayer( int number, int port, String address ) throws UnknownHostException, IOException {
+	public NetworkPlayer( PlayerData data, int port, String address ) throws UnknownHostException, IOException, ClassNotFoundException {
 		socket = new Socket( address, port );
 		out = new ObjectOutputStream(socket.getOutputStream() );
 		in = new ObjectInputStream(socket.getInputStream());
 		
-		out.writeInt(number);
+		out.writeObject(data);
 		out.flush();
-		int other = in.readInt();		
+		PlayerData otherData = (PlayerData)in.readObject();		
 		
+		checkConsistency(data, otherData);
+		name = otherData.getOtherName();
+	}
+	
+	private static void checkConsistency(PlayerData data, PlayerData otherData ) throws IOException {
 		//Player 1 connects to Player 2 or vice versa
 		//Player 1 connecting to Player 1 makes no sense
-		if( other == number ) {
+		if( data.getNetworkPlayer() != otherData.getOtherPlayer() ||
+			data.getOtherPlayer() != otherData.getNetworkPlayer()) {
 			JOptionPane.showMessageDialog(null, "Networked players are numbered inconsistently!", "Inconsistent Players", JOptionPane.ERROR_MESSAGE);
 			throw new IOException();
-		}			
+		}
+		
+		if( !data.getNetworkAlignment().equals(otherData.getOtherAlignment()) ||
+			!data.getOtherAlignment().equals(otherData.getNetworkAlignment()) ) {
+			JOptionPane.showMessageDialog(null, "Networked players have inconsistent alignments!", "Inconsistent Alignments", JOptionPane.ERROR_MESSAGE);
+			throw new IOException();
+		}		
 	}
 	
 	public void sendMove(Move move) throws IOException {		
@@ -73,7 +81,7 @@ public class NetworkPlayer implements Player {
 
 	@Override
 	public String getName() {
-		return "Network Player";
+		return name;
 	}
 
 	@Override
