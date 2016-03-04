@@ -16,8 +16,6 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -31,7 +29,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
@@ -139,8 +136,8 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 				
 				buttons[i][j].addKeyListener(this);
 
-				constraints.gridx = i + 1;
-				constraints.gridy = j + 1;
+				constraints.gridy = i + 1;
+				constraints.gridx = j + 1;
 				tiles.add(buttons[i][j], constraints);
 			}
 		}
@@ -158,12 +155,12 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 			constraints.gridy = 0;
 			label = new JLabel(Integer.toString(i), JLabel.CENTER);
 			tiles.add(label, constraints);
-			rowLabels[i][0] = label;
+			columnLabels[i][0] = label;
 
 			constraints.gridy = ROWS + 1;
 			label = new JLabel(Integer.toString(i), JLabel.CENTER);
 			tiles.add(label, constraints);
-			rowLabels[i][1] = label;
+			columnLabels[i][1] = label;
 		}
 		
 		// Add left and right columns of numeric labels
@@ -173,12 +170,12 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 			constraints.gridx = 0;
 			label = new JLabel(Integer.toString(j), JLabel.CENTER);
 			tiles.add(label, constraints);
-			columnLabels[j][0] = label;
+			rowLabels[j][0] = label;
 
 			constraints.gridx = COLUMNS + 1;
 			label = new JLabel(Integer.toString(j), JLabel.CENTER);
 			tiles.add(label, constraints);
-			columnLabels[j][1] = label;
+			rowLabels[j][1] = label;
 		}
 		
 		add(tiles, BorderLayout.CENTER);
@@ -894,14 +891,26 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 	{
 		// Eliminate all previous markings
 		
+		Font font = columnLabels[0][0].getFont();
+		
 		for( int i = 0; i < ROWS; ++i ) {
+			// Uncolor
 			columnLabels[i][1].setForeground(null);
 			columnLabels[i][0].setForeground(null);
+			
+			// Unbold
+			columnLabels[i][0].setFont(font.deriveFont(font.getStyle() & ~Font.BOLD));
+			columnLabels[i][1].setFont(font.deriveFont(font.getStyle() & ~Font.BOLD));
 		}
 		
 		for( int j = 0; j < COLUMNS; ++j ) {
+			// Uncolor
 			rowLabels[j][1].setForeground(null);
 			rowLabels[j][0].setForeground(null);
+			
+			// Unbold
+			rowLabels[j][0].setFont(font.deriveFont(font.getStyle() & ~Font.BOLD));
+			rowLabels[j][1].setFont(font.deriveFont(font.getStyle() & ~Font.BOLD));
 		}
 		
 		// Set new markings
@@ -910,6 +919,11 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 		rowLabels[row][1].setForeground(Color.RED);
 		columnLabels[column][0].setForeground(Color.RED);
 		columnLabels[column][1].setForeground(Color.RED);
+
+		rowLabels[row][0].setFont(font.deriveFont(font.getStyle() | Font.BOLD));
+		rowLabels[row][1].setFont(font.deriveFont(font.getStyle() | Font.BOLD));
+		columnLabels[column][0].setFont(font.deriveFont(font.getStyle() | Font.BOLD));
+		columnLabels[column][1].setFont(font.deriveFont(font.getStyle() | Font.BOLD));
 	}
 
 	@Override
