@@ -3,6 +3,8 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -100,11 +102,12 @@ public class Game extends JFrame implements WindowListener {
 		
 		initializeAlignments(alignment1, alignment2);
 		
-		JPanel tiles = new JPanel();	
-		tiles.setLayout(new GridLayout(ROWS, COLUMNS));
+		JPanel tiles = new JPanel();
+		tiles.setLayout(new GridBagLayout());
 		final Grass GRASS = new Grass();
+		GridBagConstraints constraints = new GridBagConstraints();
 	
-		for( int i = 0; i < ROWS; ++i )
+		for( int i = 0; i < ROWS; ++i ) {
 			for( int j = 0; j < COLUMNS; ++j ) {
 				final int row = i;
 				final int column = j;
@@ -121,8 +124,37 @@ public class Game extends JFrame implements WindowListener {
 						clickButton( row, column );						
 					}});
 				
-				tiles.add(buttons[i][j]);
+				constraints.gridx = i + 1;
+				constraints.gridy = j + 1;
+				tiles.add(buttons[i][j], constraints);
 			}
+		}
+		
+		// Provide a little padding for the labels
+		constraints.ipadx = 5;
+		constraints.ipady = 5;
+		
+		// Add top and bottom rows of numeric labels
+		for( int i = 0; i < COLUMNS; ++i ) {
+			constraints.gridx = i + 1;
+			
+			constraints.gridy = 0;
+			tiles.add(new JLabel(Integer.toString(i), JLabel.CENTER), constraints);
+
+			constraints.gridy = ROWS + 1;
+			tiles.add(new JLabel(Integer.toString(i), JLabel.CENTER), constraints);
+		}
+		
+		// Add left and right columns of numeric labels
+		for( int j = 0; j < ROWS; ++j ) {
+			constraints.gridy = j + 1;
+			
+			constraints.gridx = 0;
+			tiles.add(new JLabel(Integer.toString(j), JLabel.CENTER), constraints);
+
+			constraints.gridx = COLUMNS + 1;
+			tiles.add(new JLabel(Integer.toString(j), JLabel.CENTER), constraints);
+		}
 		
 		add(tiles, BorderLayout.CENTER);
 		
