@@ -10,10 +10,14 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -27,10 +31,11 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-public class Game extends JFrame implements WindowListener {
+public class Game extends JFrame implements WindowListener, KeyListener {
 	private static final long serialVersionUID = -8705064841297440045L;
 	public static final int ROWS = 12;
 	public static final int COLUMNS = 12;
@@ -41,6 +46,7 @@ public class Game extends JFrame implements WindowListener {
 	
 	private Square[][] board = new Square[ROWS][COLUMNS]; 
 	private Square[][] swap = new Square[ROWS][COLUMNS];
+	private Square[][] temporary = new Square[ROWS][COLUMNS];
 	private JButton[][] buttons = new JButton[ROWS][COLUMNS];
 	private JLabel playerTurn;
 	private JLabel citySelected = new JLabel("City Selected");
@@ -76,9 +82,11 @@ public class Game extends JFrame implements WindowListener {
 	private int fireDirection = Fire.NORTH;
 	private boolean player1Turn = true;
 	private boolean interactive = true;
+	private boolean controlDown = false;
 	
 	private static final int DISPLAY_WIDTH = 250;
 
+	
 	public static void main(String[] args) {        
 		
 		try {
@@ -123,12 +131,14 @@ public class Game extends JFrame implements WindowListener {
 				buttons[i][j].setContentAreaFilled(false);
 				buttons[i][j].setFocusPainted(false);
 				buttons[i][j].setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-				buttons[i][j].addActionListener(new ActionListener() {
+				buttons[i][j].addActionListener(new ActionListener() {				
 					@Override
 					public void actionPerformed(ActionEvent arg0) {
 						clickButton( row, column );						
 					}});
 				
+				buttons[i][j].addKeyListener(this);
+
 				constraints.gridx = i + 1;
 				constraints.gridy = j + 1;
 				tiles.add(buttons[i][j], constraints);
@@ -305,6 +315,34 @@ public class Game extends JFrame implements WindowListener {
 		menuBar.add(menu);
 		setJMenuBar(menuBar);
 		
+		addKeyListener(this);
+		setFocusable(true);
+	    //setFocusTraversalKeysEnabled(false);
+		
+		/*JPanel content = (JPanel) getContentPane();
+		
+		
+		 Action controlDown = new AbstractAction() {
+		      public void actionPerformed(ActionEvent actionEvent) {
+		        controlDown();
+		      }
+		    };
+		    
+	    Action controlUp = new AbstractAction() {
+		      public void actionPerformed(ActionEvent actionEvent) {
+		        controlUp();
+		      }
+		    };
+		
+		content.getInputMap().put(KeyStroke.getKeyStroke("pressed V"),
+                "pressed");
+		content.getInputMap().put(KeyStroke.getKeyStroke("released V"),
+                "released");
+		content.getActionMap().put("pressed",
+                 controlDown);
+		content.getActionMap().put("released",
+                 controlUp);
+		*/
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		pack();
 		setResizable(false);
@@ -415,7 +453,7 @@ public class Game extends JFrame implements WindowListener {
 			// Select the newly aligned type for the convenience of the player
 			select(alignment);
 			
-			updateBoard();
+			updateBoard(board);
 		
 			addMessage(player.getName() + " aligned with " + alignment);			
 			 			
@@ -560,7 +598,7 @@ public class Game extends JFrame implements WindowListener {
 		}
 	}
 
-	private void updateBoard() {
+	private void updateBoard(Square[][] board) {
 		updateFire();
 		updateTree();
 		updateCity();
@@ -644,7 +682,7 @@ public class Game extends JFrame implements WindowListener {
 			case FIRE: square = new Fire(fireDirection); break;
 			}
 			board[row][column] = square;			
-			updateBoard();
+			updateBoard(board);
 			
 			Player player = player1Turn ? player1 : player2;
 			Player otherPlayer = player1Turn ? player2 : player1;
@@ -893,17 +931,61 @@ public class Game extends JFrame implements WindowListener {
 	}
 
 	@Override
-	public void windowClosing(WindowEvent e) {}
+	public void windowOpened(WindowEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
 
 	@Override
-	public void windowDeactivated(WindowEvent e) {}
+	public void windowClosing(WindowEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
 
 	@Override
-	public void windowDeiconified(WindowEvent e) {}
+	public void windowIconified(WindowEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
 
 	@Override
-	public void windowIconified(WindowEvent e) {}
+	public void windowDeiconified(WindowEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
 
 	@Override
-	public void windowOpened(WindowEvent e) {}
+	public void windowDeactivated(WindowEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+			if( e.getKeyCode() == KeyEvent.VK_CONTROL && !controlDown ) {
+				controlDown = true;
+				for( int i = 0; i < ROWS; ++i )
+					for( int j = 0; j < COLUMNS; ++j )
+						temporary[i][j] = board[i][j];
+				updateBoard(board);
+			}					
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		if( e.getKeyCode() == KeyEvent.VK_CONTROL && controlDown ) {
+			controlDown = false;
+			for( int i = 0; i < ROWS; ++i )
+				for( int j = 0; j < COLUMNS; ++j ) {
+					board[i][j] = temporary[i][j];
+					board[i][j].update(buttons[i][j]);
+				}			
+		}		
+	}
 }
