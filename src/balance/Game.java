@@ -469,7 +469,7 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 			// Select the newly aligned type for the convenience of the player
 			select(alignment);
 			
-			updateBoard(board);
+			updateBoard();
 		
 			addMessage(player.getName() + " aligned with " + alignment);			
 			 			
@@ -614,7 +614,7 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 		}
 	}
 
-	private void updateBoard(Square[][] board) {
+	private void updateBoard() {
 		updateFire();
 		updateTree();
 		updateCity();
@@ -699,7 +699,7 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 			case FIRE: square = new Fire(fireDirection); break;
 			}
 			board[row][column] = square;			
-			updateBoard(board);
+			updateBoard();
 			
 			if( commit ) {			
 				Player player = player1Turn ? player1 : player2;
@@ -1013,7 +1013,7 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 				if( hoverRow != -1 && hoverColumn != -1 )
 					clickButton(hoverRow, hoverColumn, false);
 				else
-					updateBoard(board);
+					updateBoard();
 			}					
 	}
 

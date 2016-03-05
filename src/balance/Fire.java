@@ -103,7 +103,7 @@ public class Fire implements Square {
 
 	@Override
 	public boolean canMoveOn(Square other) {		
-		return /*other instanceof Tree || */ other instanceof Grass;
+		return other instanceof Tree ||  other instanceof Grass;
 	}
 	
 	public boolean canBurn(Square other) {
