@@ -12,6 +12,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
@@ -36,6 +38,7 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 	private static final long serialVersionUID = -8705064841297440045L;
 	public static final int ROWS = 12;
 	public static final int COLUMNS = 12;
+	
 
 	// References for row/column index labels
 	JLabel[][] rowLabels = new JLabel[ROWS][2];
@@ -64,6 +67,8 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 	private Square player2Alignment;
 	private Player player1;
 	private Player player2;
+	private int hoverRow = -1;
+	private int hoverColumn = -1;
 	
 	private Board boardState = new Board(board);
 	
@@ -132,6 +137,19 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 					@Override
 					public void actionPerformed(ActionEvent arg0) {
 						clickButton( row, column );						
+					}});
+				
+				buttons[i][j].addMouseListener(new MouseAdapter() {				
+					@Override
+					public void mouseEntered(MouseEvent e) {
+						hoverRow = row;
+						hoverColumn = column;						
+					}
+
+					@Override
+					public void mouseExited(MouseEvent e) {
+						hoverRow = -1;
+						hoverColumn = -1;
 					}});
 				
 				buttons[i][j].addKeyListener(this);
@@ -389,7 +407,7 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 		select(player1Previous);
 	}
 
-	private static JPanel createSelector( JLabel label, JButton button, Square square, String tooltip, ActionListener listener ){
+	private JPanel createSelector( JLabel label, JButton button, Square square, String tooltip, ActionListener listener ){
 		JPanel panel = new JPanel();		
 		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));		
 		square.update(button);
@@ -399,6 +417,7 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 		button.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 		button.setToolTipText(tooltip);
 		button.addActionListener(listener);
+		button.addKeyListener(this);
 		panel.add(button, BorderLayout.WEST);
 		panel.add(label, BorderLayout.EAST);
 		label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -663,14 +682,15 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 			selectFireDirection(fireDirection);
 		}
 	}	
+	public boolean clickButton( int row, int column) {
+		return clickButton( row, column, true );
+	}
 	
 	@SuppressWarnings("incomplete-switch")
-	public boolean clickButton( int row, int column ) {
+	public boolean clickButton( int row, int column, boolean commit ) {
 		if( !interactive )
 			return false;		
-		
-		
-		
+
 		if( move.canMoveOn(board[row][column] )) {
 			Square square = null;			
 			switch( move.getType() ) {
@@ -681,28 +701,31 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 			board[row][column] = square;			
 			updateBoard(board);
 			
-			Player player = player1Turn ? player1 : player2;
-			Player otherPlayer = player1Turn ? player2 : player1;
-			
-			markRowColumn(row, column);
-			addMessage(player.getName() + " " + move.pastVerb() + " " + move + " at (" + row + "," + column + ")" );
-			 			
-			if( otherPlayer instanceof NetworkPlayer ) {
-				//TODO: Thread this out for responsiveness?
-				NetworkPlayer networkPlayer = (NetworkPlayer) otherPlayer;			
-				try {
-					networkPlayer.sendMove(new Move( square, row, column ));
-				} catch (IOException e) {					
-					JOptionPane.showMessageDialog(this, "Network connection error!", "Network Error", JOptionPane.ERROR_MESSAGE);
-					dispose();
-				}
-			}			
-			
-			endTurn();
+			if( commit ) {			
+				Player player = player1Turn ? player1 : player2;
+				Player otherPlayer = player1Turn ? player2 : player1;
+				
+				markRowColumn(row, column);
+				addMessage(player.getName() + " " + move.pastVerb() + " " + move + " at (" + row + "," + column + ")" );
+				 			
+				if( otherPlayer instanceof NetworkPlayer ) {
+					//TODO: Thread this out for responsiveness?
+					NetworkPlayer networkPlayer = (NetworkPlayer) otherPlayer;			
+					try {
+						networkPlayer.sendMove(new Move( square, row, column ));
+					} catch (IOException e) {					
+						JOptionPane.showMessageDialog(this, "Network connection error!", "Network Error", JOptionPane.ERROR_MESSAGE);
+						dispose();
+					}
+				}			
+				
+				endTurn();
+			}	
 			return true;
 		}
 		else {
-			addMessage("Cannot " + move.presentVerb() + " " + move.toString().toLowerCase() + " at (" + row + "," + column + ")" );
+			if( commit )
+				addMessage("Cannot " + move.presentVerb() + " " + move.toString().toLowerCase() + " at (" + row + "," + column + ")" );
 			return false;
 		}
 	}
@@ -772,22 +795,22 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 			for( int j = 0; j < COLUMNS; ++j ) {
 				if( board[i][j] instanceof Fire ) {
 					Fire fire = (Fire) board[i][j];
-					if( fire.isHeaded( Fire.NORTH ) && isLegal( i - 1, j ) && fire.canMoveOn(board[i - 1][j]) ) {
+					if( fire.isHeaded( Fire.NORTH ) && isLegal( i - 1, j ) && fire.canBurn(board[i - 1][j]) ) {
 						addFire( i - 1, j, Fire.NORTH );						
 						if( board[i - 1][j] instanceof Tree )
 							addFire( i - 1, j, Fire.EAST );
 					}
-					if( fire.isHeaded( Fire.SOUTH ) && isLegal( i + 1, j ) && fire.canMoveOn(board[i + 1][j]) ) {
+					if( fire.isHeaded( Fire.SOUTH ) && isLegal( i + 1, j ) && fire.canBurn(board[i + 1][j]) ) {
 						addFire( i + 1, j, Fire.SOUTH );						
 						if( board[i + 1][j] instanceof Tree )
 							addFire( i + 1, j, Fire.WEST);
 					}
-					if( fire.isHeaded( Fire.EAST ) && isLegal( i, j + 1 ) && fire.canMoveOn(board[i][j + 1]) ) {
+					if( fire.isHeaded( Fire.EAST ) && isLegal( i, j + 1 ) && fire.canBurn(board[i][j + 1]) ) {
 						addFire( i, j + 1, Fire.EAST );						
 						if( board[i][j + 1] instanceof Tree )
 							addFire( i, j + 1, Fire.SOUTH );
 					}					
-					if( fire.isHeaded( Fire.WEST ) && isLegal( i, j - 1 ) && fire.canMoveOn(board[i][j - 1]) ) {
+					if( fire.isHeaded( Fire.WEST ) && isLegal( i, j - 1 ) && fire.canBurn(board[i][j - 1]) ) {
 						addFire( i, j - 1, Fire.WEST );						
 						if( board[i][j - 1] instanceof Tree )
 							addFire( i, j - 1, Fire.NORTH);
@@ -987,7 +1010,10 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 				for( int i = 0; i < ROWS; ++i )
 					for( int j = 0; j < COLUMNS; ++j )
 						temporary[i][j] = board[i][j];
-				updateBoard(board);
+				if( hoverRow != -1 && hoverColumn != -1 )
+					clickButton(hoverRow, hoverColumn, false);
+				else
+					updateBoard(board);
 			}					
 	}
 
