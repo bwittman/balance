@@ -765,20 +765,32 @@ public class Game extends JFrame implements WindowListener, KeyListener {
 		
 		for( int i = 0; i < ROWS; ++i )
 			for( int j = 0; j < COLUMNS; ++j ) {
-				if( board[i][j] instanceof Grass || board[i][j] instanceof Desert ) {
-					//fill empty spot between trees
-					if( (isTree(i - 1, j) && isTree(i + 1, j)) ||
-						(isTree(i, j - 1) && isTree(i, j + 1)) ||
-						(isTree(i - 1, j - 1) && isTree(i + 1, j + 1)) ||
-						(isTree(i + 1, j - 1) && isTree(i - 1, j + 1)))
-						swap[i][j] = new Tree();
-					//grow counterclockwise around cities 
-					else if( (isTree(i - 1, j ) && ( isCity( i, j + 1) || isCity( i - 1, j + 1) ) ) ||  
+				//Grow counter-clockwise around cities
+				if( (board[i][j] instanceof Grass || board[i][j] instanceof Desert) && 
+					((isTree(i - 1, j ) && ( isCity( i, j + 1) || isCity( i - 1, j + 1) ) ) ||  
 					(isTree(i, j - 1) && ( isCity( i - 1, j) || isCity( i - 1, j - 1) ) ) ||
 					(isTree(i + 1, j ) && ( isCity( i, j - 1) || isCity( i + 1, j - 1) ) ) ||
-					(isTree(i, j + 1) && ( isCity( i + 1, j) || isCity( i + 1, j + 1) ) ))
-						swap[i][j] = new Tree();					
-				}				
+					(isTree(i, j + 1) && ( isCity( i + 1, j) || isCity( i + 1, j + 1) ) )))
+						swap[i][j] = new Tree();
+				//If completely surrounded by cities, break out in a cross pattern
+				else if( board[i][j] instanceof Tree && 
+						(!isLegal(i - 1, j ) || isCity(i - 1, j) ) &&
+						(!isLegal(i + 1, j ) || isCity(i + 1, j) ) &&
+						(!isLegal(i, j - 1 ) || isCity(i, j - 1) ) &&
+						(!isLegal(i, j + 1 ) || isCity(i, j + 1) ) &&						
+						(!isLegal(i - 1, j - 1 ) || isCity(i - 1, j - 1) ) &&
+						(!isLegal(i + 1, j - 1) || isCity(i + 1, j - 1) ) &&
+						(!isLegal(i - 1, j + 1 ) || isCity(i - 1, j + 1) ) &&
+						(!isLegal(i + 1, j + 1 ) || isCity(i + 1, j + 1) ) ) {
+					if(isLegal(i - 1, j ) )
+						swap[i - 1][j] = new Tree();
+					if(isLegal(i + 1, j ) )
+						swap[i + 1][j] = new Tree();
+					if(isLegal(i, j - 1 ) )
+						swap[i][j - 1] = new Tree();
+					if(isLegal(i, j + 1 ) )
+						swap[i][j + 1] = new Tree();
+				}
 			}
 		
 		Square[][] temp = board;
